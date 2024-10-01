@@ -3,40 +3,32 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Label } from "../ui/Label";
 import { Checkbox } from "../ui/Checkbox";
-import { Smartphone } from "lucide-react";
+import { ShieldCheck } from "lucide-react"; // Replacing the icon to signify admin
 import { Link } from "react-router-dom";
 
-export default function Login() {
+export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempted with:", { email, password, rememberMe });
+    // Handle admin login logic here
+    console.log("Admin login attempted with:", { email, password, rememberMe });
   };
 
   return (
     <div className="min-h-screen w-screen fixed bg-gradient-to-br from-gray-100 to-white flex items-center justify-center p-4">
-      <div className="max-w-6xl w-full fixed content-center top-1/4 grid grid-cols-2 gap-8 p-8 bg-white rounded-xl shadow-2xl border border-gray-200 h-[550px]">
-        {/* Left Side - Image Section */}
-        <div className="md:block my-auto h-[410] relative -top-1">
-          <img
-            src="/loginOne.png"
-            alt="Smartphone illustration"
-            className="w-full h-full object-cover rounded-lg"
-          />
-        </div>
+      <div className="max-w-xl w-full fixed content-center top-1/4 gap-8 p-8 bg-white rounded-xl shadow-2xl border border-gray-200 h-[550px]">
         {/* Right Side - Form Section */}
         <div>
           <div className="flex flex-col justify-center">
-            <Smartphone className="mx-auto h-12 w-12 text-gray-900" />
+            <ShieldCheck className="mx-auto h-12 w-12 text-gray-900" />
             <h2 className="mt-6 text-3xl font-extrabold text-gray-900 text-center">
-              Welcome back
+              Admin Portal
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
-              Sign in to your account
+              Sign in with your admin credentials
             </p>
           </div>
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -52,7 +44,7 @@ export default function Login() {
                   autoComplete="email"
                   required
                   className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 focus:z-10 sm:text-sm"
-                  placeholder="Email address"
+                  placeholder="Admin Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -68,7 +60,7 @@ export default function Login() {
                   autoComplete="current-password"
                   required
                   className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 focus:z-10 sm:text-sm"
-                  placeholder="Password"
+                  placeholder="Admin Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -102,15 +94,18 @@ export default function Login() {
                 type="submit"
                 className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
               >
-                Sign in
+                Sign in as Admin
               </Button>
             </div>
           </form>
           <div className="text-center">
             <p className="mt-2 text-sm text-gray-600">
-              Don't have an account?{" "}
-              <Link className="font-medium text-gray-800 hover:text-gray-700">
-                Sign up
+              Not an admin?{" "}
+              <Link
+                to="/login"
+                className="font-medium text-gray-800 hover:text-gray-700"
+              >
+                Go to user login
               </Link>
             </p>
           </div>
