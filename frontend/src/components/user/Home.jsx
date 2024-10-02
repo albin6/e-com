@@ -3,17 +3,17 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Smartphone, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import CategoryCard from "./CategoryCard";
 import ProductCard from "./ProductCard";
 import BrandCard from "./BrandCard";
-import CategoryCard from "./CategoryCard";
 
-export default function LandingPage() {
+const Home = () => {
   const categories = [
     { name: "Flagship Phones", icon: Smartphone },
     { name: "Budget Phones", icon: Smartphone },
     { name: "5G Phones", icon: Smartphone },
     { name: "Foldable Phones", icon: Smartphone },
-    { name: "Foldable Phones", icon: Smartphone },
+    { name: "Rugged Phones", icon: Smartphone },
   ];
 
   const brands = [
@@ -21,8 +21,8 @@ export default function LandingPage() {
     { name: "Samsung", logo: "/placeholder.svg?height=80&width=80" },
     { name: "Google", logo: "/placeholder.svg?height=80&width=80" },
     { name: "OnePlus", logo: "/placeholder.svg?height=80&width=80" },
-    { name: "OnePlus", logo: "/placeholder.svg?height=80&width=80" },
-    { name: "OnePlus", logo: "/placeholder.svg?height=80&width=80" },
+    { name: "Xiaomi", logo: "/placeholder.svg?height=80&width=80" },
+    { name: "Sony", logo: "/placeholder.svg?height=80&width=80" },
   ];
 
   return (
@@ -51,7 +51,7 @@ export default function LandingPage() {
       <section className="py-16 px-4 md:px-8">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-bold">Shop by Category</h2>
-          <Link to="/products?category=all">
+          <Link href="/products?category=all">
             <Button
               variant="outline"
               className="bg-gray-900 hover:bg-gray-600 text-white"
@@ -71,7 +71,7 @@ export default function LandingPage() {
       <section className="py-16 px-4 md:px-8 bg-gray-100">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-bold">Featured Smartphones</h2>
-          <Link to="/products?featured=true">
+          <Link href="/products?featured=true">
             <Button
               variant="outline"
               className="bg-gray-900 hover:bg-gray-600 text-white"
@@ -91,7 +91,7 @@ export default function LandingPage() {
       <section className="py-16 px-4 md:px-8">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-bold">Shop by Brand</h2>
-          <Link to="/products?brand=all">
+          <Link href="/products?brand=all">
             <Button
               variant="outline"
               className="bg-gray-900 hover:bg-gray-600 text-white"
@@ -148,4 +148,6 @@ export default function LandingPage() {
       </section>
     </div>
   );
-}
+};
+
+export default Home;

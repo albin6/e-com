@@ -1,26 +1,51 @@
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "../ui/Button";
-import { Input } from "../ui/Input";
 import { Label } from "../ui/Label";
-import { Checkbox } from "../ui/Checkbox";
-import { ShieldCheck } from "lucide-react"; // Replacing the icon to signify admin
+import { ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
+import { axiosInstance } from "../../config/axiosInstance";
+import { useDispatch } from "react-redux";
+import { setAdminDetails } from "../../redux/Slices/adminSlice";
+
+// Form validation schema using Yup
+const AdminLoginSchema = Yup.object({
+  email: Yup.string()
+    .email("Invalid email address")
+    .required("Email is required"),
+  password: Yup.string()
+    .min(8, "Password must be at least 8 characters")
+    .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .matches(/\d/, "Password must contain at least one digit")
+    .matches(
+      /[!@#$%^&*(),.?":{}|<>]/,
+      "Password must contain at least one special character"
+    )
+    .required("Password is required"),
+});
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const dispatch = useDispatch();
+  const handleSubmit = async (values) => {
     // Handle admin login logic here
-    console.log("Admin login attempted with:", { email, password, rememberMe });
+    console.log("Admin login attempted with:", values);
+    try {
+      const response = await axiosInstance.post("/api/admin/login", values);
+      console.log(response.data.admin);
+      localStorage.setItem(
+        "admin_access_token",
+        JSON.stringify(response.data.access_token)
+      );
+      dispatch(setAdminDetails(response.data.admin));
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
     <div className="min-h-screen w-screen fixed bg-gradient-to-br from-gray-100 to-white flex items-center justify-center p-4">
       <div className="max-w-xl w-full fixed content-center top-1/4 gap-8 p-8 bg-white rounded-xl shadow-2xl border border-gray-200 h-[550px]">
-        {/* Right Side - Form Section */}
         <div>
           <div className="flex flex-col justify-center">
             <ShieldCheck className="mx-auto h-12 w-12 text-gray-900" />
@@ -31,73 +56,71 @@ export default function AdminLogin() {
               Sign in with your admin credentials
             </p>
           </div>
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="email" className="sr-only">
-                  Email address
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 focus:z-10 sm:text-sm"
-                  placeholder="Admin Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="password" className="sr-only">
-                  Password
-                </Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 focus:z-10 sm:text-sm"
-                  placeholder="Admin Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-            </div>
+          <Formik
+            initialValues={{ email: "", password: "" }}
+            validationSchema={AdminLoginSchema}
+            onSubmit={handleSubmit}
+          >
+            {({ isSubmitting }) => (
+              <Form className="mt-8 space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="email" className="sr-only">
+                      Email address
+                    </Label>
+                    <Field
+                      id="email"
+                      name="email"
+                      type="email"
+                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 focus:z-10 sm:text-sm"
+                      placeholder="Admin Email address"
+                    />
+                    <ErrorMessage
+                      name="email"
+                      component="div"
+                      className="text-red-600 text-sm mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="password" className="sr-only">
+                      Password
+                    </Label>
+                    <Field
+                      id="password"
+                      name="password"
+                      type="password"
+                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 focus:z-10 sm:text-sm"
+                      placeholder="Admin Password"
+                    />
+                    <ErrorMessage
+                      name="password"
+                      component="div"
+                      className="text-red-600 text-sm mt-1"
+                    />
+                  </div>
+                </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Checkbox
-                  id="remember-me"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked)}
-                />
-                <Label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-900"
-                >
-                  Remember me
-                </Label>
-              </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center"></div>
+                  <div className="text-sm">
+                    <Link className="font-medium text-gray-600 hover:text-gray-500">
+                      Forgot your password?
+                    </Link>
+                  </div>
+                </div>
 
-              <div className="text-sm">
-                <Link className="font-medium text-gray-600 hover:text-gray-500">
-                  Forgot your password?
-                </Link>
-              </div>
-            </div>
-
-            <div>
-              <Button
-                type="submit"
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-              >
-                Sign in as Admin
-              </Button>
-            </div>
-          </form>
+                <div>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  >
+                    Sign in as Admin
+                  </Button>
+                </div>
+              </Form>
+            )}
+          </Formik>
           <div className="text-center">
             <p className="mt-2 text-sm text-gray-600">
               Not an admin?{" "}

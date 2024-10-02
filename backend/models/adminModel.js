@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const admin_schema = new mongoose.Schema({
-  admin_id: {
+  email: {
     type: String,
     required: true,
   },
@@ -9,8 +9,12 @@ const admin_schema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  role: {
+    type: String,
+    default: "admin",
+  },
 });
 
-const Admin = mongoose.model("admin", admin_schema);
+const Admin = mongoose.model("Admin", admin_schema);
 
 export default Admin;

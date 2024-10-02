@@ -1,17 +1,32 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
+import LoginPage from "./pages/user/LoginPage";
+import SignupPage from "./pages/user/SignupPage";
 import AdminLogin from "./components/admin/AdminLogin";
-import LandingPage from "./components/user/Landing";
+import Homepage from "./pages/user/Homepage";
+import RequireNoAuthentication from "./private/RequireNoAuthentication";
 
 function AppLayout() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/" element={<Homepage />} />
+        <Route
+          path="/login"
+          element={
+            <RequireNoAuthentication>
+              <LoginPage />
+            </RequireNoAuthentication>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <RequireNoAuthentication>
+              <SignupPage />
+            </RequireNoAuthentication>
+          }
+        />
         <Route path="/admin" element={<AdminLogin />} />
       </Routes>
     </Router>

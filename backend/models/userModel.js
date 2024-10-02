@@ -15,19 +15,21 @@ const user_schema = new mongoose.Schema({
   },
   phone_number: {
     type: String,
-    required: true,
   },
   password: {
     type: String,
-    required: true,
+  },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true,
   },
   is_blocked: {
     type: String,
-    required: true,
+    default: false,
   },
   image_url: {
     type: String,
-    required: true,
   },
   created_on: {
     type: Date,

@@ -1,7 +1,7 @@
 import React from "react";
 import { Facebook, Twitter, Instagram, Smartphone } from "lucide-react";
 
-export default function Footer() {
+function Footer() {
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
@@ -185,3 +185,5 @@ export default function Footer() {
     </footer>
   );
 }
+
+export default Footer;

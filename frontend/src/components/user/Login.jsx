@@ -1,24 +1,59 @@
 import React, { useState } from "react";
+import { Formik, Form, Field } from "formik";
+import * as Yup from "yup";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Label } from "../ui/Label";
-import { Checkbox } from "../ui/Checkbox";
 import { Smartphone } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { axiosInstance } from "../../config/axiosInstance";
+import { useDispatch } from "react-redux";
+import { setUserDetails } from "../../redux/Slices/userSlice";
+
+const validationSchema = Yup.object({
+  email: Yup.string()
+    .email("Invalid email address")
+    .required("Email is required"),
+  password: Yup.string()
+    .min(8, "Password must be at least 8 characters")
+    .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .matches(/\d/, "Password must contain at least one digit")
+    .matches(
+      /[!@#$%^&*(),.?":{}|<>]/,
+      "Password must contain at least one special character"
+    )
+    .required("Password is required"),
+});
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempted with:", { email, password, rememberMe });
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [errors, setErrors] = useState({});
+  const handleSubmit = async (values) => {
+    console.log("Login attempted with:", values);
+    try {
+      console.log(values);
+      const response = await axiosInstance.post("/api/users/login", values);
+      console.log("Server response:", response);
+      if (response?.data?.access_token) {
+        localStorage.setItem("access_token", response?.data?.access_token);
+      }
+      dispatch(setUserDetails(response.data.user));
+      navigate("/");
+      if (response.status === 200) {
+        console.log("Login successful");
+      } else if (response.status === 401) {
+        console.log("Invalid credentials");
+      } else {
+        console.log("Unknown error");
+      }
+    } catch (error) {
+      console.log("Error:", error);
+    }
   };
 
   return (
-    <div className="min-h-screen w-screen fixed bg-gradient-to-br from-gray-100 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen w-screen fixed -z-10 bg-gradient-to-br from-gray-100 to-white flex items-center justify-center p-4">
       <div className="max-w-6xl w-full fixed content-center top-1/4 grid grid-cols-2 gap-8 p-8 bg-white rounded-xl shadow-2xl border border-gray-200 h-[550px]">
         {/* Left Side - Image Section */}
         <div className="md:block my-auto h-[410] relative -top-1">
@@ -39,73 +74,83 @@ export default function Login() {
               Sign in to your account
             </p>
           </div>
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="email" className="sr-only">
-                  Email address
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 focus:z-10 sm:text-sm"
-                  placeholder="Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="password" className="sr-only">
-                  Password
-                </Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 focus:z-10 sm:text-sm"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
+          {errors.invalidCredentials && (
+            <div className="mt-3 text-base text-center text-red-600">
+              {errors.invalidCredentials}
             </div>
+          )}
+          <Formik
+            initialValues={{ email: "", password: "" }}
+            validationSchema={validationSchema}
+            onSubmit={handleSubmit}
+          >
+            {({ errors, touched, isSubmitting }) => (
+              <Form className="mt-8 space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="email" className="sr-only">
+                      Email address
+                    </Label>
+                    <Field
+                      as={Input}
+                      id="email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 focus:z-10 sm:text-sm"
+                      placeholder="Email address"
+                    />
+                    {errors.email && touched.email && (
+                      <div className="text-red-500 text-xs mt-1">
+                        {errors.email}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="password" className="sr-only">
+                      Password
+                    </Label>
+                    <Field
+                      as={Input}
+                      id="password"
+                      name="password"
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 focus:z-10 sm:text-sm"
+                      placeholder="Password"
+                    />
+                    {errors.password && touched.password && (
+                      <div className="text-red-500 text-xs mt-1">
+                        {errors.password}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Checkbox
-                  id="remember-me"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked)}
-                />
-                <Label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-900"
-                >
-                  Remember me
-                </Label>
-              </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center"></div>
 
-              <div className="text-sm">
-                <Link className="font-medium text-gray-600 hover:text-gray-500">
-                  Forgot your password?
-                </Link>
-              </div>
-            </div>
+                  <div className="text-sm">
+                    <Link className="font-medium text-gray-600 hover:text-gray-500">
+                      Forgot your password?
+                    </Link>
+                  </div>
+                </div>
 
-            <div>
-              <Button
-                type="submit"
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-              >
-                Sign in
-              </Button>
-            </div>
-          </form>
+                <div>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  >
+                    Sign in
+                  </Button>
+                </div>
+              </Form>
+            )}
+          </Formik>
           <div className="text-center">
             <p className="mt-2 text-sm text-gray-600">
               Don't have an account?{" "}
