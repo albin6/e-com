@@ -1,9 +1,28 @@
 import React, { useState } from "react";
 import { Search, Bell, User, LogOut } from "lucide-react";
+import { adminAxiosInstance } from "../../config/axiosInstance";
+import { useDispatch } from "react-redux";
+import { logoutAdmin } from "../../redux/Slices/adminSlice";
 
 export default function Header() {
+  const dispatch = useDispatch();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const adminLogoutHandle = async () => {
+    try {
+      const response = await adminAxiosInstance.post(
+        "/api/admin/logout",
+        {},
+        { withCredentials: true }
+      );
+      if (response.status === 204) {
+        console.log(response.data.message);
+        dispatch(logoutAdmin());
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <header className="bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -33,7 +52,7 @@ export default function Header() {
               <Bell className="h-6 w-6" />
             </button>
 
-            <div className="ml-3 relative">
+            <div className="ml-3 relative focus:outline-none">
               <div>
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -52,20 +71,19 @@ export default function Header() {
                   aria-orientation="vertical"
                   aria-labelledby="user-menu"
                 >
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  <button
+                    className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     role="menuitem"
                   >
                     Profile
-                  </a>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  </button>
+                  <button
+                    className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     role="menuitem"
+                    onClick={adminLogoutHandle}
                   >
                     Logout
-                  </a>
+                  </button>
                 </div>
               )}
             </div>

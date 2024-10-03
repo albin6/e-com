@@ -34,21 +34,18 @@ export default function Login() {
     try {
       console.log(values);
       const response = await axiosInstance.post("/api/users/login", values);
-      console.log("Server response:", response);
+      console.log("Server response:", response.data);
       if (response?.data?.access_token) {
-        localStorage.setItem("access_token", response?.data?.access_token);
+        console.log("access_token", response?.data?.access_token);
+        localStorage.setItem(
+          "access_token",
+          JSON.stringify(response?.data?.access_token)
+        );
       }
       dispatch(setUserDetails(response.data.user));
       navigate("/");
-      if (response.status === 200) {
-        console.log("Login successful");
-      } else if (response.status === 401) {
-        console.log("Invalid credentials");
-      } else {
-        console.log("Unknown error");
-      }
     } catch (error) {
-      console.log("Error:", error);
+      console.log(error.response);
     }
   };
 

@@ -27,5 +27,15 @@ Content-Type: application/json
 
 {
     "email" : "cellsphere.shop@gmail.com",
-    "password" : "Admin@1"
+    "password" : "Admin@123"
+}
+
+###
+
+POST http://localhost:4040/api/admin/create
+Content-Type: application/json
+
+{
+    "email" : "cellsphere.shop@gmail.com",
+    "password" : "Admin@123"
 }

@@ -2,14 +2,18 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import session from "express-session";
+import cookieParser from "cookie-parser";
 import connectDB from "./config/connectDB.js";
 import user_router from "./routes/user_route.js";
 import "./utils/passport/passport.js";
 import passport from "passport";
 import admin_router from "./routes/admin_route.js";
+
 const app = express();
 
 connectDB();
+
+app.use(cookieParser());
 
 app.use(
   cors({
@@ -17,6 +21,7 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(express.json());
 
 app.use(
@@ -29,6 +34,9 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use("/api/users", user_router);
+app.use("/api/admin", admin_router);
 
 app.get(
   "/oauth/google",
@@ -47,8 +55,11 @@ app.get(
   }
 );
 
-app.use("/api/users", user_router);
-app.use("/api/admin", admin_router);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).send("Internal Server Error");
+});
 
 const PORT = process.env.PORT;
 app.listen(PORT, () =>

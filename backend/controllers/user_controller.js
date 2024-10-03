@@ -48,7 +48,7 @@ export const register = AsyncHandler(async (req, res) => {
     await new_refresh_token.save();
     res.cookie("refresh_token", refresh_token, {
       httpOnly: true,
-      secure: true,
+      secure: false,
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
     });
@@ -75,7 +75,7 @@ export const login = AsyncHandler(async (req, res) => {
   const is_user_exists = await User.findOne({ email: email });
   console.log(is_user_exists);
   if (is_user_exists) {
-    const is_password_match = compare_password(
+    const is_password_match = await compare_password(
       password,
       is_user_exists.password
     );
@@ -95,7 +95,7 @@ export const login = AsyncHandler(async (req, res) => {
       await new_refresh_token.save();
       res.cookie("refresh_token", refresh_token, {
         httpOnly: true,
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
       });
@@ -129,6 +129,7 @@ export const send_otp = AsyncHandler(async (req, res) => {
   }
 
   const is_user_exists = await User.findOne({ email });
+  console.log(is_user_exists);
 
   if (is_user_exists) {
     return res
@@ -169,7 +170,7 @@ export const verify_otp = AsyncHandler(async (req, res) => {
 
 // POST /api/users/logout
 export const logout = AsyncHandler(async (req, res) => {
-  const { refresh_token } = req.cookies;
+  const { refresh_token } = req.cookies["refresh_token"];
 
   await RefreshToken.deleteOne({ token: refresh_token });
 
@@ -206,7 +207,7 @@ export const new_access_token_generate = AsyncHandler(async (req, res) => {
       { id: user.id, email: user.email },
       process.env.JWT_ACCESS_KEY,
       {
-        expiresIn: "15m",
+        expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION,
       }
     );
     res.json({ access_token: new_access_token });

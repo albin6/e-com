@@ -13,6 +13,6 @@ user_router.post("/signup", register);
 user_router.post("/login", login);
 user_router.post("/send-otp", send_otp);
 user_router.post("/verify-otp", verify_otp);
-user_router.post("/logout", authenticate_token, logout);
+user_router.post("/logout", logout);
 
 export default user_router;

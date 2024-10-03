@@ -52,7 +52,7 @@ export default function Signup() {
       const response = await axiosInstance.post("/api/users/send-otp", {
         email: values.email,
       });
-      if (response.data.success) {
+      if (response?.data?.success) {
         setIsOTPModalOpen(true);
         setOtpMessage("OTP sent successfully. Please check your email.");
         setOtpErrMessage("");

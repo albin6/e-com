@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "../ui/Button";
 import { Label } from "../ui/Label";
 import { ShieldCheck } from "lucide-react";
@@ -25,21 +25,44 @@ const AdminLoginSchema = Yup.object({
     .required("Password is required"),
 });
 
-export default function AdminLogin() {
+export default function Login() {
   const dispatch = useDispatch();
+  const [errors, setErrors] = useState({});
   const handleSubmit = async (values) => {
     // Handle admin login logic here
     console.log("Admin login attempted with:", values);
     try {
       const response = await axiosInstance.post("/api/admin/login", values);
-      console.log(response.data.admin);
+
+      console.log("response :", response);
+      // Assuming login success
       localStorage.setItem(
         "admin_access_token",
         JSON.stringify(response.data.access_token)
       );
       dispatch(setAdminDetails(response.data.admin));
+      console.log("Admin login successful:", response.data.admin);
     } catch (error) {
-      console.log(error);
+      if (error.response) {
+        const status = error.response.status;
+
+        if (status === 404) {
+          setErrors({
+            invalidCredentials: "Email not found",
+          });
+        } else if (status === 401) {
+          setErrors({
+            invalidCredentials: "Email or password is incorrect",
+          });
+        } else {
+          setErrors({
+            invalidCredentials: "An unexpected error occurred",
+          });
+        }
+      } else {
+        // Handle other errors, e.g., network errors
+        console.error("Error occurred:", error.message);
+      }
     }
   };
 
@@ -56,6 +79,11 @@ export default function AdminLogin() {
               Sign in with your admin credentials
             </p>
           </div>
+          {errors.invalidCredentials && (
+            <div className="mt-3 text-base text-center text-red-600">
+              {errors.invalidCredentials}
+            </div>
+          )}
           <Formik
             initialValues={{ email: "", password: "" }}
             validationSchema={AdminLoginSchema}
