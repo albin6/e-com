@@ -1,12 +1,12 @@
 import jwt from "jsonwebtoken";
 
-export const authenticate_token = (req, res, next) => {
+export const authenticate_user_token = (req, res, next) => {
   try {
     if (
-      req.headers["Authorization"] &&
-      req.headers["Authorization"].startsWith("Bearer ")
+      req.headers["authorization"] &&
+      req.headers["authorization"].startsWith("Bearer ")
     ) {
-      const token = req.headers["Authorization"].split(" ")[1];
+      const token = req.headers["authorization"].split(" ")[1];
 
       jwt.verify(token, process.env.JWT_ACCESS_KEY, (err, user) => {
         if (err) {

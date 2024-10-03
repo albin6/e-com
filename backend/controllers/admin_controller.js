@@ -1,5 +1,8 @@
 import AsyncHandler from "express-async-handler";
 import Admin from "../models/adminModel.js";
+import User from "../models/userModel.js";
+import RefreshToken from "../models/refreshTokenModel.js";
+import { set_token } from "../utils/jwt/setCookie.js";
 import {
   compare_password,
   hash_password,
@@ -8,8 +11,6 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/jwt/generateToken.js";
-import RefreshToken from "../models/refreshTokenModel.js";
-import { set_token } from "../utils/jwt/setCookie.js";
 
 export const admin_login = AsyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -71,6 +72,44 @@ export const admin_logout = AsyncHandler(async (req, res) => {
     expires: new Date(0),
   });
   res.status(204).json({ success: true, message: "logout successfully" });
+});
+
+// GET /api/admin/users-list
+export const get_users_list = AsyncHandler(async (req, res) => {
+  console.log("in get users list : req.user =>", req.user);
+  const users_list = await User.find(
+    {},
+    { password: false, created_on: false }
+  );
+  console.log("In get users list => usersList:", users_list);
+
+  res.json({ success: true, users: users_list });
+});
+
+// patch /api/admin/users-list
+export const update_user_status = AsyncHandler(async (req, res) => {
+  const { userId } = req.body;
+  const user_data = await User.findById(userId);
+
+  console.log("update user status ; =>", user_data);
+
+  if (!user_data) {
+    return res.status(404).json({ success: false, message: "User Not Found" });
+  }
+
+  const is_currently_blocked = user_data.is_blocked;
+
+  console.log("current status => ", is_currently_blocked);
+
+  const updated_user_data = await User.findByIdAndUpdate(
+    userId,
+    { $set: { is_blocked: !is_currently_blocked } },
+    { new: true }
+  );
+
+  console.log(updated_user_data);
+
+  res.json({ success: true, updated_user_data });
 });
 
 // POST /api/admin/token

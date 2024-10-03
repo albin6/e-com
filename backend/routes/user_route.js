@@ -6,7 +6,7 @@ import {
   verify_otp,
   logout,
 } from "../controllers/user_controller.js";
-import { authenticate_token } from "../middleware/authenticateToken.js";
+import { authenticate_user_token } from "../middleware/authenticate_user_token.js";
 const user_router = express.Router();
 
 user_router.post("/signup", register);

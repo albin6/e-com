@@ -173,11 +173,11 @@ export const verify_otp = AsyncHandler(async (req, res) => {
 
 // POST /api/users/logout
 export const logout = AsyncHandler(async (req, res) => {
-  const { refresh_token } = req.cookies["refresh_token"];
+  const user_refresh_token = req.cookies["user_refresh_token"];
 
-  await RefreshToken.deleteOne({ token: refresh_token });
+  await RefreshToken.deleteOne({ token: user_refresh_token });
 
-  res.clearCookie("refresh_token");
+  res.clearCookie("user_refresh_token");
   res.sendStatus(204);
 });
 

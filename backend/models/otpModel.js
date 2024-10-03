@@ -3,7 +3,7 @@ import sendVerificationEmail from "../utils/nodemailer/sendVerificationEmail.js"
 
 const otp_schema = new mongoose.Schema({
   otp: {
-    type: String,
+    type: Number,
     required: true,
   },
   email: {

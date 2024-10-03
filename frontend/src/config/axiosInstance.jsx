@@ -51,7 +51,9 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-// Admin
+// --------------------------------------------------------------
+// --------------------------------------------------------------
+
 export const adminAxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   withCredentials: true,
@@ -65,7 +67,6 @@ adminAxiosInstance.interceptors.request.use(async (config) => {
   if (admin_access_token) {
     config.headers["Authorization"] = `Bearer ${admin_access_token}`;
   }
-
   return config;
 });
 

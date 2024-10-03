@@ -14,7 +14,7 @@ const user_schema = new mongoose.Schema({
     required: true,
   },
   phone_number: {
-    type: String,
+    type: Number,
   },
   password: {
     type: String,
@@ -25,7 +25,7 @@ const user_schema = new mongoose.Schema({
     sparse: true,
   },
   is_blocked: {
-    type: String,
+    type: Boolean,
     default: false,
   },
   image_url: {

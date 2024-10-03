@@ -26,11 +26,7 @@ function Header() {
     console.log("Logout clicked");
     setIsUserMenuOpen(false);
     try {
-      await axiosInstance.post(
-        "/api/users/logout",
-        {},
-        { withCredentials: true }
-      );
+      await axiosInstance.post("/api/users/logout");
       localStorage.removeItem("access_token");
       dispatch(logoutUser());
       navigate("/");
