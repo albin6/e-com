@@ -1,5 +1,5 @@
 import React from "react";
-import { useUserAuth } from "../hooks/CustomHooks";
+import { useUserAuth } from "../../hooks/CustomHooks";
 import { Navigate } from "react-router-dom";
 
 function RequireNoAuthentication({ children }) {

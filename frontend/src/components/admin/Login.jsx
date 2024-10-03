@@ -5,7 +5,7 @@ import { ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { axiosInstance } from "../../config/axiosInstance";
+import { adminAxiosInstance } from "../../config/axiosInstance";
 import { useDispatch } from "react-redux";
 import { setAdminDetails } from "../../redux/Slices/adminSlice";
 
@@ -27,40 +27,41 @@ const AdminLoginSchema = Yup.object({
 
 export default function Login() {
   const dispatch = useDispatch();
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState("");
   const handleSubmit = async (values) => {
     // Handle admin login logic here
     console.log("Admin login attempted with:", values);
     try {
-      const response = await axiosInstance.post("/api/admin/login", values);
-
-      console.log("response :", response);
-      // Assuming login success
-      localStorage.setItem(
-        "admin_access_token",
-        JSON.stringify(response.data.access_token)
+      const response = await adminAxiosInstance.post(
+        "/api/admin/login",
+        values
       );
-      dispatch(setAdminDetails(response.data.admin));
-      console.log("Admin login successful:", response.data.admin);
+      console.log("response :", response);
+
+      // Assuming login success
+      if (response?.data) {
+        localStorage.setItem(
+          "admin_access_token",
+          JSON.stringify(response?.data?.access_token)
+        );
+        dispatch(setAdminDetails(response?.data?.admin));
+        console.log("Admin login successful:", response?.data?.admin);
+      }
     } catch (error) {
-      if (error.response) {
+      if (error?.response) {
         const status = error.response.status;
+        console.log(status);
+        const message = error.response.data.message;
 
         if (status === 404) {
-          setErrors({
-            invalidCredentials: "Email not found",
-          });
+          setError(message);
+          console.log("404 state updated");
         } else if (status === 401) {
-          setErrors({
-            invalidCredentials: "Email or password is incorrect",
-          });
+          setError(message);
         } else {
-          setErrors({
-            invalidCredentials: "An unexpected error occurred",
-          });
+          setError(message);
         }
       } else {
-        // Handle other errors, e.g., network errors
         console.error("Error occurred:", error.message);
       }
     }
@@ -79,9 +80,9 @@ export default function Login() {
               Sign in with your admin credentials
             </p>
           </div>
-          {errors.invalidCredentials && (
+          {error && (
             <div className="mt-3 text-base text-center text-red-600">
-              {errors.invalidCredentials}
+              {error}
             </div>
           )}
           <Formik

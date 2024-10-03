@@ -15,12 +15,11 @@ axiosInstance.interceptors.request.use(async (config) => {
   return config;
 });
 
-// interceptor for refreshing access token if it expires
-
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original_request = error.config;
+
     if (
       error.response.status === 401 &&
       error.response.data.message === "Not authorized, token failed" &&
@@ -36,15 +35,19 @@ axiosInstance.interceptors.response.use(
             withCredentials: true,
           }
         );
+
         axiosInstance.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${response?.data?.access_token}`;
 
         return axiosInstance(original_request);
       } catch (error) {
-        console.log(error);
+        console.log("Error refreshing token:", error);
+        return Promise.reject(error);
       }
     }
+
+    return Promise.reject(error);
   }
 );
 
@@ -57,7 +60,7 @@ export const adminAxiosInstance = axios.create({
 adminAxiosInstance.interceptors.request.use(async (config) => {
   const admin_access_token = JSON.parse(
     localStorage.getItem("admin_access_token")
-  ); // Admin token
+  );
 
   if (admin_access_token) {
     config.headers["Authorization"] = `Bearer ${admin_access_token}`;
@@ -66,11 +69,11 @@ adminAxiosInstance.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Interceptor for admin token refresh
 adminAxiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original_request = error.config;
+
     if (
       error.response.status === 401 &&
       error.response.data.message === "Not authorized, token failed" &&
@@ -80,20 +83,24 @@ adminAxiosInstance.interceptors.response.use(
 
       try {
         const response = await adminAxiosInstance.post(
-          "/api/admin/token", // Admin-specific refresh endpoint
+          "/api/admin/token",
           {},
           {
             withCredentials: true,
           }
         );
+
         adminAxiosInstance.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${response?.data?.access_token}`;
 
         return adminAxiosInstance(original_request);
       } catch (error) {
-        console.log(error);
+        console.log("Admin token refresh failed:", error);
+        return Promise.reject(error);
       }
     }
+
+    return Promise.reject(error);
   }
 );

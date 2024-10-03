@@ -4,12 +4,13 @@ import LoginPage from "./pages/user/LoginPage";
 import SignupPage from "./pages/user/SignupPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import Homepage from "./pages/user/Homepage";
-import RequireNoAuthentication from "./private/RequireNoAuthentication";
+import RequireNoAuthentication from "./private/user/RequireNoAuthentication";
 import { useSelector } from "react-redux";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UsersList from "./pages/admin/UsersList";
 import Category from "./pages/admin/Category";
 import ProductList from "./pages/admin/ProductList";
+import RequireAuth from "./private/admin/RequireAuth";
 
 function AppLayout() {
   const admin = useSelector((state) => state.admin.adminInfo);
@@ -37,9 +38,30 @@ function AppLayout() {
           path="/admin"
           element={admin ? <AdminDashboard /> : <AdminLogin />}
         />
-        <Route path="/admin/users" element={<UsersList />} />
-        <Route path="/admin/category" element={<Category />} />
-        <Route path="/admin/products" element={<ProductList />} />
+        <Route
+          path="/admin/users"
+          element={
+            <RequireAuth>
+              <UsersList />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/category"
+          element={
+            <RequireAuth>
+              <Category />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/products"
+          element={
+            <RequireAuth>
+              <ProductList />
+            </RequireAuth>
+          }
+        />
       </Routes>
     </Router>
   );

@@ -14,6 +14,7 @@ import {
   hash_password,
   compare_password,
 } from "../utils/secure-password/password-bcrypt.js";
+import { set_token } from "../utils/jwt/setCookie.js";
 
 // Registering a new user
 // POST /api/users/signup
@@ -22,10 +23,7 @@ export const register = AsyncHandler(async (req, res) => {
   const { first_name, last_name, email, phone_number, password } = req.body;
   const is_user_exists = await User.findOne({ email });
 
-  if (is_user_exists) {
-    res.status(409).json({ message: "User Already Exists" });
-    throw new Error("User Already Exists");
-  } else {
+  if (!is_user_exists) {
     const hashed_password = await hash_password(password);
     const new_user = await User.create({
       first_name,
@@ -46,12 +44,12 @@ export const register = AsyncHandler(async (req, res) => {
     });
 
     await new_refresh_token.save();
-    res.cookie("refresh_token", refresh_token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
-    });
+    set_token(
+      "user_refresh_token",
+      refresh_token,
+      7 * 24 * 60 * 60 * 1000,
+      res
+    );
     res.json({
       success: true,
       message: "User Registered Successfully",
@@ -64,6 +62,9 @@ export const register = AsyncHandler(async (req, res) => {
       },
       access_token,
     });
+  } else {
+    res.status(409).json({ message: "User Already Exists" });
+    throw new Error("User Already Exists");
   }
 });
 
@@ -93,12 +94,12 @@ export const login = AsyncHandler(async (req, res) => {
       });
 
       await new_refresh_token.save();
-      res.cookie("refresh_token", refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
-      });
+      set_token(
+        "user_refresh_token",
+        refresh_token,
+        7 * 24 * 60 * 60 * 1000,
+        res
+      );
       res.json({
         message: "Login Success",
         access_token,
@@ -131,41 +132,43 @@ export const send_otp = AsyncHandler(async (req, res) => {
   const is_user_exists = await User.findOne({ email });
   console.log(is_user_exists);
 
-  if (is_user_exists) {
+  if (!is_user_exists) {
+    const otp = generateOTP();
+    console.log(otp);
+
+    await OTP.create({
+      email,
+      otp,
+    });
+
+    send_verification_email(email, otp);
+    res.json({ success: true, message: "OTP sent successfully" });
+  } else {
     return res
       .status(401)
       .json({ success: false, message: "User is already registered" });
   }
-
-  const otp = generateOTP();
-  console.log(otp);
-
-  await OTP.create({
-    email,
-    otp,
-  });
-  send_verification_email(email, otp);
-  res.json({ success: true, message: "OTP sent successfully" });
 });
 
 export const verify_otp = AsyncHandler(async (req, res) => {
   const { otp, email } = req.body;
   console.log(otp, email);
   const db_data = await OTP.find({ email }).sort({ createdAt: -1 }).limit(1);
-  console.log(db_data);
+  console.log(db_data, db_data.length);
 
-  if (db_data.length == 0) {
+  if (db_data.length != 0) {
+    console.log(otp, db_data[0].otp);
+    if (otp == db_data[0]?.otp) {
+      res.json({ success: true, message: "OTP verified successfully" });
+    } else {
+      return res.json({
+        invalid: true,
+        message: "OTP is not valid",
+      });
+    }
+  } else {
     return res.json({ expires: true, message: "OTP Expires" });
   }
-
-  if (otp != db_data[0]?.otp) {
-    return res.json({
-      invalid: true,
-      message: "OTP is not valid",
-    });
-  }
-
-  res.json({ success: true, message: "OTP verified successfully" });
 });
 
 // POST /api/users/logout
@@ -189,27 +192,27 @@ export const new_access_token_generate = AsyncHandler(async (req, res) => {
     token: refresh_token,
   });
   if (!stored_refresh_token) {
+    if (!(stored_refresh_token.expiresAt < new Date())) {
+      // verify the refresh token and give a new access token
+      jwt.verify(refresh_token, process.env.JWT_REFRESH_KEY, (err, user) => {
+        if (err) {
+          return res.sendStatus(403);
+        }
+
+        const new_access_token = jwt.sign(
+          { id: user.id, email: user.email },
+          process.env.JWT_ACCESS_KEY,
+          {
+            expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION,
+          }
+        );
+        res.json({ access_token: new_access_token });
+      });
+    } else {
+      await RefreshToken.deleteOne({ token: refresh_token });
+      return res.status(403).json({ message: "Refresh Token Expired" });
+    }
+  } else {
     return res.status(403);
   }
-
-  if (stored_refresh_token.expiresAt < new Date()) {
-    await RefreshToken.deleteOne({ token: refresh_token });
-    return res.status(403).json({ message: "Refresh Token Expired" });
-  }
-
-  // verify the refresh token and give a new access token
-  jwt.verify(refresh_token, process.env.JWT_REFRESH_KEY, (err, user) => {
-    if (err) {
-      return res.sendStatus(403);
-    }
-
-    const new_access_token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_ACCESS_KEY,
-      {
-        expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION,
-      }
-    );
-    res.json({ access_token: new_access_token });
-  });
 });

@@ -17,6 +17,7 @@ export default function Header() {
       );
       if (response.status === 204) {
         console.log(response.data.message);
+        localStorage.removeItem("admin_access_token");
         dispatch(logoutAdmin());
       }
     } catch (error) {
