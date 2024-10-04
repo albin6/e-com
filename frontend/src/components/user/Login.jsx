@@ -28,7 +28,7 @@ const validationSchema = Yup.object({
 export default function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState("");
   const handleSubmit = async (values) => {
     console.log("Login attempted with:", values);
     try {
@@ -45,6 +45,9 @@ export default function Login() {
       dispatch(setUserDetails(response.data.user));
       navigate("/");
     } catch (error) {
+      if (error?.response?.status === 401) {
+        setError(error?.response?.data?.message);
+      }
       console.log(error.response);
     }
   };
@@ -71,9 +74,9 @@ export default function Login() {
               Sign in to your account
             </p>
           </div>
-          {errors.invalidCredentials && (
+          {error && (
             <div className="mt-3 text-base text-center text-red-600">
-              {errors.invalidCredentials}
+              {error}
             </div>
           )}
           <Formik

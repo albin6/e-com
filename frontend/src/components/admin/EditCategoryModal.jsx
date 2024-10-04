@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { Switch } from "@headlessui/react";
 
 function EditCategoryModal({ category, onUpdate, onClose }) {
-  const [title, setTitle] = useState(category.title);
-  const [isListed, setIsListed] = useState(category.isListed);
+  const [title, setTitle] = useState(category?.title);
+  const [status, setStatus] = useState(category?.status);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onUpdate({ ...category, title, isListed });
+    onUpdate({ ...category, title, status });
   };
 
   return (
@@ -28,18 +28,18 @@ function EditCategoryModal({ category, onUpdate, onClose }) {
           <div className="mb-4 flex items-center justify-between">
             <span>Status</span>
             <Switch
-              checked={isListed}
-              onChange={setIsListed}
+              checked={status}
+              onChange={setStatus}
               className={`${
-                isListed ? "bg-blue-600" : "bg-gray-200"
+                isListed ? "bg-gray-800" : "bg-gray-200"
               } relative inline-flex h-6 w-11 items-center rounded-full`}
             >
               <span className="sr-only">
-                {isListed ? "Unlist category" : "List category"}
+                {status ? "Unlist category" : "List category"}
               </span>
               <span
                 className={`${
-                  isListed ? "translate-x-6" : "translate-x-1"
+                  status ? "translate-x-6" : "translate-x-1"
                 } inline-block h-4 w-4 transform rounded-full bg-white transition`}
               />
             </Switch>
@@ -54,7 +54,7 @@ function EditCategoryModal({ category, onUpdate, onClose }) {
             </button>
             <button
               type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-600"
             >
               Update
             </button>

@@ -75,46 +75,59 @@ export const login = AsyncHandler(async (req, res) => {
   console.log(email, password);
   const is_user_exists = await User.findOne({ email: email });
   console.log(is_user_exists);
-  if (is_user_exists) {
-    const is_password_match = await compare_password(
-      password,
-      is_user_exists.password
-    );
-    if (is_password_match) {
-      // login validation success
-      // generate jwt
-      const user_data = { id: is_user_exists._id, email: is_user_exists.email };
-      const access_token = generateAccessToken(user_data);
-      const refresh_token = generateRefreshToken(user_data);
-
-      const new_refresh_token = new RefreshToken({
-        token: refresh_token,
-        user: is_user_exists._id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7d
-      });
-
-      await new_refresh_token.save();
-      set_token(
-        "user_refresh_token",
-        refresh_token,
-        7 * 24 * 60 * 60 * 1000,
-        res
+  if (!is_user_exists.is_blocked) {
+    if (is_user_exists) {
+      const is_password_match = await compare_password(
+        password,
+        is_user_exists.password
       );
-      res.json({
-        message: "Login Success",
-        access_token,
-        user: {
-          ...user_data,
-          firstName: is_user_exists.first_name,
-          lastName: is_user_exists.last_name,
-        },
-      });
+      if (is_password_match) {
+        // login validation success
+        // generate jwt
+        const user_data = {
+          id: is_user_exists._id,
+          email: is_user_exists.email,
+        };
+        const access_token = generateAccessToken(user_data);
+        const refresh_token = generateRefreshToken(user_data);
+
+        const new_refresh_token = new RefreshToken({
+          token: refresh_token,
+          user: is_user_exists._id,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7d
+        });
+
+        await new_refresh_token.save();
+        set_token(
+          "user_refresh_token",
+          refresh_token,
+          7 * 24 * 60 * 60 * 1000,
+          res
+        );
+        res.json({
+          message: "Login Success",
+          access_token,
+          user: {
+            ...user_data,
+            firstName: is_user_exists.first_name,
+            lastName: is_user_exists.last_name,
+          },
+        });
+      } else {
+        res
+          .status(401)
+          .json({ success: false, message: "Invalid email or password" });
+      }
     } else {
-      res.status(401).json({ message: "Invalid email or password" });
+      res.status(401).json({
+        success: false,
+        message: "Credentials not found. Please create a new account.",
+      });
     }
   } else {
     res.status(401).json({
-      message: "Credentials not found. Please create a new account.",
+      success: false,
+      message: "You are blocked. Not able to login",
     });
   }
 });

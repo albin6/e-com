@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useCallback } from "react";
 import fetchUsers from "../../utils/fetchUsers";
 import { adminAxiosInstance } from "../../config/axiosInstance";
+import AdminBlockUserModal from "./AdminBlockUserModal";
 
 export default function UserListing() {
   const [usersList, setUsersList] = useState([]);
   const [filteredUserList, setFilteredUserList] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userIdToBlock, setUserIdToBlock] = useState(null);
+  const [userNameToBlock, setUserNameToBlock] = useState(null);
+  const [currentUserStatus, setUserCurrentStatus] = useState(null);
 
   useEffect(() => {
     fetchUsers()
@@ -18,6 +23,13 @@ export default function UserListing() {
     setFilteredUserList(usersList);
     console.log("filtered list updated");
   }, [usersList]);
+
+  const handleBlockUser = (userId, username, userStatus) => {
+    setUserCurrentStatus(userStatus);
+    setUserNameToBlock(username);
+    setUserIdToBlock(userId);
+    setIsModalOpen(true);
+  };
 
   const toggleBlockStatus = async (userId) => {
     try {
@@ -72,7 +84,9 @@ export default function UserListing() {
               <td className="py-3 px-6 text-left">{user.phone_number}</td>
               <td className="py-3 px-6 text-center">
                 <button
-                  onClick={() => toggleBlockStatus(user._id)}
+                  onClick={() =>
+                    handleBlockUser(user._id, user.first_name, user.is_blocked)
+                  }
                   className={`py-1 px-3 rounded-full text-xs font-bold ${
                     user.is_blocked
                       ? "bg-green-200 text-green-700 hover:bg-green-300"
@@ -86,6 +100,14 @@ export default function UserListing() {
           ))}
         </tbody>
       </table>
+      <AdminBlockUserModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={toggleBlockStatus}
+        userId={userIdToBlock || ""}
+        username={userNameToBlock}
+        currentStatus={currentUserStatus ? "Unblock" : "Block"}
+      />
     </div>
   );
 }
