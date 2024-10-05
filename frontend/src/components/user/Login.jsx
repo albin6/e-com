@@ -35,6 +35,7 @@ export default function Login() {
       console.log(values);
       const response = await axiosInstance.post("/api/users/login", values);
       console.log("Server response:", response.data);
+
       if (response?.data?.access_token) {
         console.log("access_token", response?.data?.access_token);
         localStorage.setItem(
@@ -42,13 +43,25 @@ export default function Login() {
           JSON.stringify(response?.data?.access_token)
         );
       }
+
       dispatch(setUserDetails(response.data.user));
       navigate("/");
     } catch (error) {
       if (error?.response?.status === 401) {
-        setError(error?.response?.data?.message);
+        setError(error?.response?.data?.message); // "Invalid email or password"
       }
-      console.log(error.response);
+      if (error?.response?.status === 404) {
+        setError(error?.response?.data?.message); // "Credentials not found. Please create a new account"
+      }
+      if (error?.response?.status === 500) {
+        setError(error?.response?.data?.message); // "You are blocked. Not able to login"
+      }
+      if (error?.response?.status) {
+        setError(
+          error?.response?.data?.message ||
+            "An error occurred. Please try again."
+        );
+      }
     }
   };
 
@@ -133,7 +146,10 @@ export default function Login() {
                   <div className="flex items-center"></div>
 
                   <div className="text-sm">
-                    <Link className="font-medium text-gray-600 hover:text-gray-500">
+                    <Link
+                      to={"/users/forgot-password"}
+                      className="font-medium text-gray-600 hover:text-gray-500"
+                    >
                       Forgot your password?
                     </Link>
                   </div>

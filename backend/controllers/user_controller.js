@@ -40,16 +40,11 @@ export const register = AsyncHandler(async (req, res) => {
     const new_refresh_token = new RefreshToken({
       token: refresh_token,
       user: new_user._id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7d
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 7d
     });
 
     await new_refresh_token.save();
-    set_token(
-      "user_refresh_token",
-      refresh_token,
-      7 * 24 * 60 * 60 * 1000,
-      res
-    );
+    set_token("user_refresh_token", refresh_token, 24 * 60 * 60 * 1000, res);
     res.json({
       success: true,
       message: "User Registered Successfully",
@@ -75,8 +70,8 @@ export const login = AsyncHandler(async (req, res) => {
   console.log(email, password);
   const is_user_exists = await User.findOne({ email: email });
   console.log(is_user_exists);
-  if (!is_user_exists.is_blocked) {
-    if (is_user_exists) {
+  if (is_user_exists) {
+    if (!is_user_exists.is_blocked) {
       const is_password_match = await compare_password(
         password,
         is_user_exists.password
@@ -94,14 +89,14 @@ export const login = AsyncHandler(async (req, res) => {
         const new_refresh_token = new RefreshToken({
           token: refresh_token,
           user: is_user_exists._id,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7d
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 7d
         });
 
         await new_refresh_token.save();
         set_token(
           "user_refresh_token",
           refresh_token,
-          7 * 24 * 60 * 60 * 1000,
+          24 * 60 * 60 * 1000,
           res
         );
         res.json({
@@ -119,15 +114,15 @@ export const login = AsyncHandler(async (req, res) => {
           .json({ success: false, message: "Invalid email or password" });
       }
     } else {
-      res.status(401).json({
+      res.status(500).json({
         success: false,
-        message: "Credentials not found. Please create a new account.",
+        message: "You are blocked. Not able to login",
       });
     }
   } else {
-    res.status(401).json({
+    res.status(404).json({
       success: false,
-      message: "You are blocked. Not able to login",
+      message: "Credentials not found. Please create a new account.",
     });
   }
 });
@@ -135,34 +130,54 @@ export const login = AsyncHandler(async (req, res) => {
 // generate an otp
 // POST /api/user/send-otp
 export const send_otp = AsyncHandler(async (req, res) => {
-  const { email } = req.body;
-  console.log("log in controller ", email);
+  const data = req.body;
+  console.log("log in controller ", data.email);
 
-  if (!validator.isEmail(email)) {
+  if (!validator.isEmail(data.email)) {
     return res.status(400).send({ message: "Invalid email address" });
   }
 
-  const is_user_exists = await User.findOne({ email });
+  const is_user_exists = await User.findOne({ email: data.email });
   console.log(is_user_exists);
 
-  if (!is_user_exists) {
-    const otp = generateOTP();
-    console.log(otp);
+  if (data?.user) {
+    if (is_user_exists) {
+      const otp = generateOTP();
+      console.log(otp);
 
-    await OTP.create({
-      email,
-      otp,
-    });
+      await OTP.create({
+        email: data.email,
+        otp,
+      });
 
-    send_verification_email(email, otp);
-    res.json({ success: true, message: "OTP sent successfully" });
+      send_verification_email(data.email, otp);
+      res.json({ success: true, message: "OTP sent successfully" });
+    } else {
+      return res
+        .status(404)
+        .json({ success: false, message: "The email is not registered" });
+    }
   } else {
-    return res
-      .status(401)
-      .json({ success: false, message: "User is already registered" });
+    if (!is_user_exists) {
+      const otp = generateOTP();
+      console.log(otp);
+
+      await OTP.create({
+        email: data.email,
+        otp,
+      });
+
+      send_verification_email(data.email, otp);
+      res.json({ success: true, message: "OTP sent successfully" });
+    } else {
+      return res
+        .status(409)
+        .json({ success: false, message: "User is already registered" });
+    }
   }
 });
 
+// POST /api/users/verify-otp
 export const verify_otp = AsyncHandler(async (req, res) => {
   const { otp, email } = req.body;
   console.log(otp, email);
@@ -172,7 +187,8 @@ export const verify_otp = AsyncHandler(async (req, res) => {
   if (db_data.length != 0) {
     console.log(otp, db_data[0].otp);
     if (otp == db_data[0]?.otp) {
-      res.json({ success: true, message: "OTP verified successfully" });
+      const user = await User.findOne({ email }).select("-password");
+      res.json({ success: true, message: "OTP verified successfully", user });
     } else {
       return res.json({
         invalid: true,
@@ -182,6 +198,25 @@ export const verify_otp = AsyncHandler(async (req, res) => {
   } else {
     return res.json({ expires: true, message: "OTP Expires" });
   }
+});
+
+// POST /api/users/reset-password
+export const reset_password = AsyncHandler(async (req, res) => {
+  const { id, password } = req.body;
+
+  console.log("reset_password =>>>", id, password);
+
+  const hashed_password = await hash_password(password);
+  const user = await User.findById(id);
+
+  user.password = hashed_password;
+
+  await user.save();
+
+  res.json({
+    success: true,
+    message: "Your password has been successfully reset.",
+  });
 });
 
 // POST /api/users/logout

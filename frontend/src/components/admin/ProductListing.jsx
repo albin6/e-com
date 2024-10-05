@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useNavigate } from "react-router-dom";
 
 // Mock initial products
 const initialProducts = [
@@ -32,6 +33,7 @@ const initialProducts = [
 const categories = ["All", "Electronics", "Clothing"];
 
 export default function ProductListing() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState(initialProducts);
   const [filterCategory, setFilterCategory] = useState("All");
   const [sortBy, setSortBy] = useState("name");
@@ -39,11 +41,13 @@ export default function ProductListing() {
   const handleAddProduct = () => {
     // Implement add product functionality
     console.log("Add product clicked");
+    navigate("/admin/products/add-product");
   };
 
   const handleEditProduct = (product) => {
     // Implement edit product functionality
     console.log("Edit product:", product);
+    navigate("/admin/products/edit-product");
   };
 
   const handleDeleteProduct = (productId) => {

@@ -15,14 +15,17 @@ export const submitCategoryForm = async (newCategory) => {
 
 export const updateCategory = async (updatedCategory) => {
   const response = await adminAxiosInstance.put(
-    `/api/admin/categories/${updateCategory._id}`,
+    "/api/admin/categories/",
     updatedCategory
   );
+  console.log("response of put request =>", response.data);
+  return response.data.category_data;
 };
 
 export const updateCategoryStatus = async (categoryId) => {
-  const response = await adminAxiosInstance.patch(
-    "/api/admin/categories",
-    updatedCategory
-  );
+  const response = await adminAxiosInstance.patch("/api/admin/categories", {
+    categoryId,
+  });
+  console.log(response.data);
+  return response.data.category_data;
 };

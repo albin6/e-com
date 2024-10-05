@@ -11,6 +11,13 @@ import UsersList from "./pages/admin/UsersList";
 import Category from "./pages/admin/Category";
 import ProductList from "./pages/admin/ProductList";
 import RequireAuth from "./private/admin/RequireAuth";
+import Brand from "./pages/admin/Brand";
+import AddProduct from "./pages/admin/AddProduct";
+import EditProduct from "./pages/admin/EditProduct";
+import NewPassword from "./components/user/NewPassword";
+import ForgotPassword from "./components/user/ForgotPassword";
+import ProductDetailsPage from "./pages/user/ProductDetailsPage";
+import RequireAuthentication from "./private/user/RequireAuthentication";
 
 function AppLayout() {
   const admin = useSelector((state) => state.admin.adminInfo);
@@ -32,6 +39,16 @@ function AppLayout() {
             <RequireNoAuthentication>
               <SignupPage />
             </RequireNoAuthentication>
+          }
+        />
+        <Route path="/users/forgot-password" element={<ForgotPassword />} />
+        <Route path="/users/reset-password/:id" element={<NewPassword />} />
+        <Route
+          path="/products"
+          element={
+            <RequireAuthentication>
+              <ProductDetailsPage />
+            </RequireAuthentication>
           }
         />
         <Route
@@ -62,13 +79,41 @@ function AppLayout() {
             </RequireAuth>
           }
         />
+        <Route
+          path="/admin/products/add-product"
+          element={
+            <RequireAuth>
+              <AddProduct />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/products/edit-product"
+          element={
+            <RequireAuth>
+              <EditProduct />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/brand"
+          element={
+            <RequireAuth>
+              <Brand />
+            </RequireAuth>
+          }
+        />
       </Routes>
     </Router>
   );
 }
 
 function App() {
-  return <AppLayout />;
+  return (
+    <>
+      <AppLayout />
+    </>
+  );
 }
 
 export default App;

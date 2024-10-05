@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setUserDetails } from "../../redux/Slices/userSlice";
 import CreateUserIcon from "../../assets/CreateUserIcon";
 import { axiosInstance } from "../../config/axiosInstance";
 import { OTPModal } from "./OTPEnterModal";
+import GoogleAuth from "../ui/google/GoogleAuth";
 
 // Validation Schema
 const validationSchema = Yup.object({
@@ -37,6 +38,7 @@ const validationSchema = Yup.object({
 });
 
 export default function Signup() {
+  const user = useSelector((state) => state.user.userInfo);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [error, setError] = useState("");
@@ -309,10 +311,10 @@ export default function Signup() {
                   </div>
 
                   <div className="mt-3 grid grid-cols-2 gap-3">
+                    <GoogleAuth />
                     <button
                       type="button"
                       className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                      onClick={google_signup}
                     >
                       <span className="sr-only">Sign up with Google</span>
                       <svg

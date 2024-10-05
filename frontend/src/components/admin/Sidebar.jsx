@@ -9,6 +9,7 @@ import {
   Gift,
   Grid,
   Image,
+  Blocks,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -20,6 +21,7 @@ export default function Sidebar() {
     { name: "Coupons", icon: Tag },
     { name: "Offers", icon: Gift },
     { name: "Category", icon: Grid, api: "/admin/category" },
+    { name: "Brand", icon: Blocks, api: "/admin/brand" },
     { name: "Banner", icon: Image },
   ];
 

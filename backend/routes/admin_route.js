@@ -11,8 +11,16 @@ import {
   get_all_categories,
   add_new_category,
   update_category,
+  update_category_status,
 } from "../controllers/category_controller.js";
+import {
+  add_new_brand,
+  get_all_brands,
+  update_brand_status,
+  update_brand,
+} from "../controllers/brand_controller.js";
 import { authenticate_admin_token } from "../middleware/authenticate_admin_token.js";
+import { upload } from "../utils/multer/multer.js";
 const admin_router = express.Router();
 
 // admin login / logout
@@ -29,11 +37,16 @@ admin_router
 admin_router
   .route("/categories")
   .get(authenticate_admin_token, get_all_categories)
-  .post(authenticate_admin_token, add_new_category);
+  .post(authenticate_admin_token, add_new_category)
+  .put(authenticate_admin_token, update_category)
+  .patch(authenticate_admin_token, update_category_status);
 
 admin_router
-  .route("/categories/:id")
-  .put(authenticate_admin_token, update_category);
+  .route("/brands")
+  .get(authenticate_admin_token, get_all_brands)
+  .post(authenticate_admin_token, upload, add_new_brand)
+  .patch(authenticate_admin_token, update_brand_status)
+  .put(authenticate_admin_token, upload, update_brand);
 
 // ---------------------------------------------------
 // create admin

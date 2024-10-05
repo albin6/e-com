@@ -29,7 +29,40 @@ export const add_new_category = AsyncHandler(async (req, res) => {
 
 // PUT /api/admin/categories
 export const update_category = AsyncHandler(async (req, res) => {
-  const category_id = req.params;
-  console.log("params category id => ", category_id);
   console.log("category put req body => ", req.body);
+  const category = req.body;
+  const category_data = await Category.findById(category._id);
+
+  let is_updated = false;
+  if (category.title && category.title !== category_data.title) {
+    category_data.title = category.title;
+    is_updated = true;
+  }
+
+  if (category.status && category.status !== category_data.status) {
+    category_data.status = category.status;
+    is_updated = true;
+  }
+
+  if (is_updated) {
+    category_data.updatedAt = Date.now();
+  }
+  await category_data.save();
+
+  console.log("after saving changes => ", category_data);
+
+  res.json({ success: true, category_data });
+});
+
+// PATCH /api/admin/categories
+export const update_category_status = AsyncHandler(async (req, res) => {
+  const { categoryId } = req.body;
+
+  const category_data = await Category.findById(categoryId);
+
+  category_data.status = !category_data.status;
+
+  await category_data.save();
+
+  res.json({ success: true, category_data });
 });

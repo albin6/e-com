@@ -8,12 +8,17 @@ import user_router from "./routes/user_route.js";
 import "./utils/passport/passport.js";
 import passport from "passport";
 import admin_router from "./routes/admin_route.js";
+import { google_authentication } from "./controllers/google_controller.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Simulate __dirname in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
 connectDB();
-
-app.use(cookieParser());
 
 app.use(
   cors({
@@ -23,6 +28,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(
   session({
@@ -35,27 +41,21 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    console.log(`Serving static file: ${req.path}`);
+    next();
+  },
+  express.static(path.join(__dirname, "public", "uploads"))
+);
+
 app.use("/api/users", user_router);
 app.use("/api/admin", admin_router);
 
-app.get(
-  "/oauth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
+// API for google authentication
+app.post("/google-auth", google_authentication);
 
-app.get(
-  "/oauth/google/callback",
-  passport.authenticate("google", {
-    failureRedirect: `${process.env.CORS_ALLOWED_ORIGIN}/signup`,
-    successRedirect: `${process.env.CORS_ALLOWED_ORIGIN}/signup`,
-  }),
-  (req, res) => {
-    // Successful authentication, redirect to home.
-    res.redirect("/");
-  }
-);
-
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).send("Internal Server Error");
