@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { Button } from "../ui/Button";
-import { Label } from "../ui/Label";
-import { ShieldCheck } from "lucide-react";
+import { Button, Label } from "../ui/ui-components";
+import { KeyRoundIcon } from "lucide-react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { axiosInstance } from "../../config/axiosInstance";
 import { OTPModal } from "./OTPEnterModal";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // Form validation schema using Yup for email
 const ForgotPasswordSchema = Yup.object({
@@ -101,7 +100,7 @@ export default function ForgotPassword() {
       <div className="max-w-xl w-full fixed content-center top-1/4 gap-8 p-8 bg-white rounded-xl shadow-2xl border border-gray-200 h-[400px]">
         <div>
           <div className="flex flex-col justify-center">
-            <ShieldCheck className="mx-auto h-12 w-12 text-gray-900" />
+            <KeyRoundIcon className="mx-auto h-12 w-12 text-gray-900" />
             <h2 className="mt-6 text-3xl font-extrabold text-gray-900 text-center">
               Forgot Password
             </h2>
@@ -125,8 +124,8 @@ export default function ForgotPassword() {
             onSubmit={handleSubmit}
           >
             {({ isSubmitting }) => (
-              <Form className="mt-8 space-y-6">
-                <div>
+              <Form className="mt-8">
+                <div className="mb-6">
                   <Label htmlFor="email" className="sr-only">
                     Email address
                   </Label>
@@ -144,7 +143,7 @@ export default function ForgotPassword() {
                   />
                 </div>
 
-                <div>
+                <div className="mb-5">
                   <Button
                     type="submit"
                     disabled={isSubmitting}
@@ -152,6 +151,14 @@ export default function ForgotPassword() {
                   >
                     Verify Email
                   </Button>
+                </div>
+                <div>
+                  <Link
+                    to={"/login"}
+                    className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-700 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  >
+                    Back to login
+                  </Link>
                 </div>
               </Form>
             )}

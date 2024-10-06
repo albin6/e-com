@@ -1,6 +1,5 @@
 import React from "react";
-import { Button } from "../ui/Button";
-import { Input } from "../ui/Input";
+import { Button, Input } from "../ui/ui-components";
 import { Smartphone, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import CategoryCard from "./CategoryCard";

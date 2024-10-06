@@ -6,8 +6,8 @@ const mail_sender = async (email, title, body) => {
       host: "smtp.gmail.com",
       port: 587,
       auth: {
-        user: "cellsphere.shop@gmail.com",
-        pass: "rhbs iora tpfr zwef",
+        user: process.env.NODEMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
       },
     });
 

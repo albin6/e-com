@@ -1,8 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Input } from "../ui/Input";
-import { Button } from "../ui/Button";
-import { NavLink } from "../ui/NavLink";
-import { IconButton } from "../ui/IconButton";
+import { Button, Input, IconButton, NavLink } from "../ui/ui-components";
 import { Search, Heart, ShoppingCart, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";

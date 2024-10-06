@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/ui-components";
 
 const ProductCard = ({ product }) => (
   <div className="bg-white p-4 rounded-lg shadow">

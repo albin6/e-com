@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { Button } from "../ui/Button";
-import { Label } from "../ui/Label";
+import { Label, Button } from "../ui/ui-components";
 import { ShieldCheck } from "lucide-react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";

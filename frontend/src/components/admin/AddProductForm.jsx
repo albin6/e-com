@@ -1,428 +1,515 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { PlusCircle, MinusCircle, Upload, X } from "lucide-react";
+import { PlusCircle, X, Upload, Crop, ShoppingBag } from "lucide-react";
+import Cropper from "react-easy-crop";
 
-const AddProductForm = ({ product }) => {
-  const [images, setImages] = useState(product?.images || []);
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Textarea,
+  Label,
+  Input,
+  Button,
+} from "../ui/ui-components";
 
-  const validationSchema = Yup.object().shape({
-    name: Yup.string().required("Name is required"),
-    description: Yup.string().required("Description is required"),
-    price: Yup.number()
-      .positive("Price must be positive")
-      .required("Price is required"),
-    discount: Yup.number()
-      .min(0, "Discount cannot be negative")
-      .max(100, "Discount cannot exceed 100%"),
-    brand: Yup.string().required("Brand is required"),
-    category: Yup.string().required("Category is required"),
-    stock: Yup.number()
-      .integer("Stock must be an integer")
-      .min(0, "Stock cannot be negative")
-      .required("Stock is required"),
-    tags: Yup.array().of(Yup.string()),
-    variations: Yup.array().of(
-      Yup.object().shape({
-        attribute: Yup.string().required("Attribute is required"),
-        terms: Yup.array().of(
-          Yup.object().shape({
-            term: Yup.string().required("Term is required"),
-            sku: Yup.string().required("SKU is required"),
-          })
-        ),
-      })
-    ),
-  });
+const AddProductSchema = Yup.object().shape({
+  name: Yup.string().required("Product name is required"),
+  description: Yup.string().required("Description is required"),
+  price: Yup.number()
+    .positive("Price must be positive")
+    .required("Price is required"),
+  discount: Yup.number()
+    .min(0, "Discount cannot be negative")
+    .max(100, "Discount cannot exceed 100%"),
+  category: Yup.string().required("Category is required"),
+  brand: Yup.string().required("Brand is required"),
+  stock: Yup.number()
+    .integer("Stock must be an integer")
+    .min(0, "Stock cannot be negative")
+    .required("Stock is required"),
+  variations: Yup.array().of(
+    Yup.object().shape({
+      attribute: Yup.string().required("Attribute is required"),
+      terms: Yup.array().of(
+        Yup.object().shape({
+          term: Yup.string().required("Term is required"),
+          sku: Yup.string().required("SKU is required"),
+        })
+      ),
+    })
+  ),
+});
 
-  const handleImageUpload = (event, setFieldValue) => {
+const InputField = ({ label, name, ...props }) => (
+  <div className="mb-4">
+    <Label htmlFor={name} className="text-sm font-medium text-gray-700">
+      {label}
+    </Label>
+    <Field name={name}>
+      {({ field, meta }) => (
+        <div>
+          <Input
+            {...field}
+            {...props}
+            className={`mt-1 block w-full rounded-md ${
+              meta.touched && meta.error ? "border-red-500" : "border-gray-300"
+            }`}
+          />
+          <ErrorMessage
+            name={name}
+            component="div"
+            className="text-red-500 text-xs mt-1"
+          />
+        </div>
+      )}
+    </Field>
+  </div>
+);
+
+export default function Component() {
+  const [images, setImages] = useState([]);
+  const [error, setError] = useState("");
+  const [croppingImageIndex, setCroppingImageIndex] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  const handleImageUpload = (event) => {
     const files = Array.from(event.target.files);
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImages((prevImages) => [...prevImages, e.target.result]);
-      };
-      reader.readAsDataURL(file);
-    });
-    setFieldValue("images", [...images, ...files]);
+    setImages((prevImages) => [
+      ...prevImages,
+      ...files.map((file) => ({ file, preview: URL.createObjectURL(file) })),
+    ]);
   };
 
-  const removeImage = (index, setFieldValue) => {
+  const removeImage = (index) => {
     setImages((prevImages) => prevImages.filter((_, i) => i !== index));
-    setFieldValue(
-      "images",
-      images.filter((_, i) => i !== index)
-    );
+  };
+
+  const startCropping = (index) => {
+    setCroppingImageIndex(index);
+  };
+
+  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleCropSave = useCallback(async () => {
+    try {
+      const croppedImage = await getCroppedImg(
+        images[croppingImageIndex].preview,
+        croppedAreaPixels,
+        0
+      );
+      const newImages = [...images];
+      newImages[croppingImageIndex] = {
+        ...newImages[croppingImageIndex],
+        preview: croppedImage,
+        file: await fetch(croppedImage).then((r) => r.blob()),
+      };
+      setImages(newImages);
+      setCroppingImageIndex(null);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [croppingImageIndex, images, croppedAreaPixels]);
+
+  const handleSubmit = async (values, { setSubmitting }) => {
+    try {
+      const formData = new FormData();
+      Object.keys(values).forEach((key) => {
+        if (key === "variations") {
+          formData.append(key, JSON.stringify(values[key]));
+        } else {
+          formData.append(key, values[key]);
+        }
+      });
+      images.forEach((image, index) => {
+        formData.append(`images`, image.file);
+      });
+
+      // Here you would typically send the formData to your API
+      console.log("Form data:", formData);
+      // Simulating API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Product added successfully");
+      // Handle success (e.g., show a success message, redirect)
+    } catch (error) {
+      console.error("Error adding product:", error);
+      setError("An error occurred while adding the product");
+    }
+    setSubmitting(false);
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-xl">
-      <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">
-        Add Product: {product?.name}
-      </h2>
-      <Formik
-        initialValues={{
-          name: product?.name || "",
-          description: product?.description || "",
-          price: product?.price || "",
-          discount: product?.discount || "",
-          brand: product?.brand || "",
-          category: product?.category || "",
-          images: product?.images || [],
-          stock: product?.stock || "",
-          tags: product?.tags || [""],
-          variations: product?.variations || [
-            { attribute: "", terms: [{ term: "", sku: "" }] },
-          ],
-        }}
-        validationSchema={validationSchema}
-        onSubmit={(values, { setSubmitting }) => {
-          console.log(values);
-          // Here you would typically make an API call to update the product
-          setSubmitting(false);
-        }}
-      >
-        {({ values, errors, touched, setFieldValue, isSubmitting }) => (
-          <Form className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Name
-                </label>
-                <Field
-                  name="name"
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                />
-                <ErrorMessage
-                  name="name"
-                  component="div"
-                  className="text-red-500 text-sm mt-1"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="price"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Price
-                </label>
-                <Field
-                  name="price"
-                  type="number"
-                  step="0.01"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                />
-                <ErrorMessage
-                  name="price"
-                  component="div"
-                  className="text-red-500 text-sm mt-1"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="discount"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Discount (%)
-                </label>
-                <Field
-                  name="discount"
-                  type="number"
-                  step="0.01"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                />
-                <ErrorMessage
-                  name="discount"
-                  component="div"
-                  className="text-red-500 text-sm mt-1"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="stock"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Stock
-                </label>
-                <Field
-                  name="stock"
-                  type="number"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                />
-                <ErrorMessage
-                  name="stock"
-                  component="div"
-                  className="text-red-500 text-sm mt-1"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="brand"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Brand
-                </label>
-                <Field
-                  name="brand"
-                  as="select"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                >
-                  <option value="">Select a brand</option>
-                  <option value="apple">Apple</option>
-                  <option value="samsung">Samsung</option>
-                  <option value="google">Google</option>
-                </Field>
-                <ErrorMessage
-                  name="brand"
-                  component="div"
-                  className="text-red-500 text-sm mt-1"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="category"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Category
-                </label>
-                <Field
-                  name="category"
-                  as="select"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                >
-                  <option value="">Select a category</option>
-                  <option value="smartphone">Smartphone</option>
-                  <option value="tablet">Tablet</option>
-                  <option value="accessory">Accessory</option>
-                </Field>
-                <ErrorMessage
-                  name="category"
-                  component="div"
-                  className="text-red-500 text-sm mt-1"
-                />
-              </div>
+    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="max-w-4xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-center">
+            <ShoppingBag className="w-10 h-10 mx-auto mb-2" />
+            Add New Product
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <div className="mb-4 p-4 text-center text-red-700 bg-red-100 rounded-md">
+              {error}
             </div>
-
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Description
-              </label>
-              <Field
-                name="description"
-                as="textarea"
-                rows={4}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              />
-              <ErrorMessage
-                name="description"
-                component="div"
-                className="text-red-500 text-sm mt-1"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="images"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Images
-              </label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                <div className="space-y-1 text-center">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <div className="flex text-sm text-gray-600">
-                    <label
-                      htmlFor="images"
-                      className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
+          )}
+          <Formik
+            initialValues={{
+              name: "",
+              description: "",
+              price: "",
+              discount: "",
+              category: "",
+              brand: "",
+              stock: "",
+              variations: [{ attribute: "", terms: [{ term: "", sku: "" }] }],
+            }}
+            validationSchema={AddProductSchema}
+            onSubmit={handleSubmit}
+          >
+            {({ values, isSubmitting }) => (
+              <Form className="space-y-6">
+                <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                  <InputField
+                    label="Product Name"
+                    name="name"
+                    placeholder="Enter product name"
+                  />
+                  <div className="mb-4">
+                    <Label
+                      htmlFor="brand"
+                      className="text-sm font-medium text-gray-700"
                     >
-                      <span>Upload files</span>
-                      <input
-                        id="images"
-                        name="images"
-                        type="file"
-                        className="sr-only"
-                        multiple
-                        onChange={(event) =>
-                          handleImageUpload(event, setFieldValue)
-                        }
-                      />
-                    </label>
-                    <p className="pl-1">or drag and drop</p>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    PNG, JPG, GIF up to 10MB
-                  </p>
-                </div>
-              </div>
-              <ErrorMessage
-                name="images"
-                component="div"
-                className="text-red-500 text-sm mt-1"
-              />
-              <div className="mt-4 grid grid-cols-3 gap-4">
-                {images.map((image, index) => (
-                  <div key={index} className="relative">
-                    <img
-                      src={image}
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-md"
+                      Brand
+                    </Label>
+                    <Field name="brand">
+                      {({ field }) => (
+                        <Select onValueChange={field.onChange} {...field}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a brand" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="apple">Apple</SelectItem>
+                            <SelectItem value="samsung">Samsung</SelectItem>
+                            <SelectItem value="google">Google</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </Field>
+                    <ErrorMessage
+                      name="brand"
+                      component="div"
+                      className="text-red-500 text-xs mt-1"
                     />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index, setFieldValue)}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
                   </div>
-                ))}
-              </div>
-            </div>
+                  <div className="mb-4">
+                    <Label
+                      htmlFor="category"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Category
+                    </Label>
+                    <Field name="category">
+                      {({ field }) => (
+                        <Select onValueChange={field.onChange} {...field}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="smartphones">
+                              Smartphones
+                            </SelectItem>
+                            <SelectItem value="tablets">Tablets</SelectItem>
+                            <SelectItem value="accessories">
+                              Accessories
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </Field>
+                    <ErrorMessage
+                      name="category"
+                      component="div"
+                      className="text-red-500 text-xs mt-1"
+                    />
+                  </div>
+                  <InputField
+                    label="Stock"
+                    name="stock"
+                    type="number"
+                    placeholder="Enter stock quantity"
+                  />
+                  <InputField
+                    label="Price"
+                    name="price"
+                    type="number"
+                    placeholder="Enter price"
+                  />
+                  <InputField
+                    label="Discount (%)"
+                    name="discount"
+                    type="number"
+                    placeholder="Enter discount percentage"
+                  />
+                </div>
 
-            <FieldArray name="tags">
-              {({ insert, remove, push }) => (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tags
-                  </label>
-                  {values.tags.length > 0 &&
-                    values.tags.map((tag, index) => (
-                      <div className="flex items-center mt-2" key={index}>
-                        <Field
-                          name={`tags.${index}`}
-                          type="text"
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                <div className="mb-4">
+                  <Label
+                    htmlFor="description"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Description
+                  </Label>
+                  <Field
+                    name="description"
+                    as={Textarea}
+                    rows={3}
+                    placeholder="Enter product description"
+                  />
+                  <ErrorMessage
+                    name="description"
+                    component="div"
+                    className="text-red-500 text-xs mt-1"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <Label className="text-sm font-medium text-gray-700 mb-2">
+                    Product Images
+                  </Label>
+                  <div className="mt-1 flex items-center">
+                    <Label
+                      htmlFor="image-upload"
+                      className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                      <Upload className="w-5 h-5 mr-2" />
+                      Upload Images
+                      <Input
+                        id="image-upload"
+                        type="file"
+                        className="hidden"
+                        onChange={handleImageUpload}
+                        multiple
+                        accept="image/*"
+                      />
+                    </Label>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                    {images.map((image, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={image.preview}
+                          alt={`Product ${index + 1}`}
+                          className="h-24 w-full object-cover rounded-md"
                         />
-                        <button
+                        <Button
                           type="button"
-                          className="ml-2 text-red-600 hover:text-red-800"
-                          onClick={() => remove(index)}
+                          onClick={() => removeImage(index)}
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-0 right-0 -mt-2 -mr-2"
                         >
-                          <MinusCircle className="h-5 w-5" />
-                        </button>
+                          <X className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => startCropping(index)}
+                          variant="secondary"
+                          size="icon"
+                          className="absolute bottom-0 right-0 mb-1 mr-1"
+                        >
+                          <Crop className="w-4 h-4" />
+                        </Button>
                       </div>
                     ))}
-                  <button
-                    type="button"
-                    className="mt-2 text-indigo-600 hover:text-indigo-800"
-                    onClick={() => push("")}
-                  >
-                    <PlusCircle className="h-5 w-5 inline mr-1" /> Add Tag
-                  </button>
+                  </div>
                 </div>
-              )}
-            </FieldArray>
 
-            <FieldArray name="variations">
-              {({ insert, remove, push }) => (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Variations
-                  </label>
-                  {values.variations.length > 0 &&
-                    values.variations.map((variation, index) => (
-                      <div
-                        key={index}
-                        className="mt-4 p-4 border border-gray-200 rounded-md bg-gray-50"
-                      >
-                        <div className="flex justify-between items-center mb-2">
-                          <Field
-                            name={`variations.${index}.attribute`}
-                            as="select"
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                          >
-                            <option value="">Select an attribute</option>
-                            <option value="color">Color</option>
-                            <option value="size">Size</option>
-                            <option value="storage">Storage</option>
-                          </Field>
-                          <button
-                            type="button"
-                            className="text-red-600 hover:text-red-800"
-                            onClick={() => remove(index)}
-                          >
-                            <MinusCircle className="h-5 w-5" />
-                          </button>
+                {croppingImageIndex !== null && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <Card className="w-96">
+                      <CardContent className="p-4">
+                        <div className="relative h-64 mb-4">
+                          <Cropper
+                            image={images[croppingImageIndex].preview}
+                            crop={crop}
+                            zoom={zoom}
+                            aspect={4 / 3}
+                            onCropChange={setCrop}
+                            onCropComplete={onCropComplete}
+                            onZoomChange={setZoom}
+                          />
                         </div>
-                        <FieldArray name={`variations.${index}.terms`}>
-                          {({ insert, remove, push }) => (
-                            <div>
-                              {variation.terms.length > 0 &&
-                                variation.terms.map((term, termIndex) => (
-                                  <div key={termIndex} className="flex mt-2">
-                                    <Field
-                                      name={`variations.${index}.terms.${termIndex}.term`}
-                                      type="text"
-                                      placeholder="Term"
-                                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                                    />
-                                    <Field
-                                      name={`variations.${index}.terms.${termIndex}.sku`}
-                                      type="text"
-                                      placeholder="SKU"
-                                      className="ml-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                                    />
-                                    <button
-                                      type="button"
-                                      className="ml-2 text-red-600 hover:text-red-800"
-                                      onClick={() => remove(termIndex)}
-                                    >
-                                      <MinusCircle className="h-5 w-5" />
-                                    </button>
-                                  </div>
-                                ))}
-                              <button
-                                type="button"
-                                className="mt-2 text-indigo-600 hover:text-indigo-800"
-                                onClick={() => push({ term: "", sku: "" })}
-                              >
-                                <PlusCircle className="h-5 w-5 inline mr-1" />{" "}
-                                Add Term
-                              </button>
-                            </div>
-                          )}
-                        </FieldArray>
-                      </div>
-                    ))}
-                  <button
-                    type="button"
-                    className="mt-2 text-indigo-600 hover:text-indigo-800"
-                    onClick={() =>
-                      push({ attribute: "", terms: [{ term: "", sku: "" }] })
-                    }
-                  >
-                    <PlusCircle className="h-5 w-5 inline mr-1" /> Add Variation
-                  </button>
-                </div>
-              )}
-            </FieldArray>
+                        <div className="flex justify-between">
+                          <Button
+                            variant="outline"
+                            onClick={() => setCroppingImageIndex(null)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button onClick={handleCropSave}>Save Crop</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
 
-            <div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-              >
-                {isSubmitting ? "Updating Product..." : "Update Product"}
-              </button>
-            </div>
-          </Form>
-        )}
-      </Formik>
+                <FieldArray name="variations">
+                  {({ push, remove }) => (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2">
+                        Variations
+                      </Label>
+                      {values.variations.map((_, index) => (
+                        <Card key={index} className="mb-4">
+                          <CardContent className="p-4">
+                            <InputField
+                              label="Attribute"
+                              name={`variations.${index}.attribute`}
+                              placeholder="e.g., Color, Size"
+                            />
+                            <FieldArray name={`variations.${index}.terms`}>
+                              {({ push: pushTerm, remove: removeTerm }) => (
+                                <div>
+                                  {values.variations[index].terms.map(
+                                    (_, termIndex) => (
+                                      <div
+                                        key={termIndex}
+                                        className="flex items-center space-x-2 mt-2"
+                                      >
+                                        <Input
+                                          name={`variations.${index}.terms.${termIndex}.term`}
+                                          placeholder="Term"
+                                          className="flex-1"
+                                        />
+                                        <Input
+                                          name={`variations.${index}.terms.${termIndex}.sku`}
+                                          placeholder="SKU"
+                                          className="flex-1"
+                                        />
+                                        <Button
+                                          type="button"
+                                          onClick={() => removeTerm(termIndex)}
+                                          variant="destructive"
+                                          size="icon"
+                                        >
+                                          <X className="w-4 h-4" />
+                                        </Button>
+                                      </div>
+                                    )
+                                  )}
+                                  <Button
+                                    type="button"
+                                    onClick={() =>
+                                      pushTerm({ term: "", sku: "" })
+                                    }
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-2"
+                                  >
+                                    <PlusCircle className="w-4 h-4 mr-2" /> Add
+                                    Term
+                                  </Button>
+                                </div>
+                              )}
+                            </FieldArray>
+                            {index > 0 && (
+                              <Button
+                                type="button"
+                                onClick={() => remove(index)}
+                                variant="destructive"
+                                size="sm"
+                                className="mt-2"
+                              >
+                                Remove Variation
+                              </Button>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                      <Button
+                        type="button"
+                        onClick={() =>
+                          push({
+                            attribute: "",
+                            terms: [{ term: "", sku: "" }],
+                          })
+                        }
+                        variant="outline"
+                      >
+                        <PlusCircle className="w-5 h-5 mr-2" /> Add Variation
+                      </Button>
+                    </div>
+                  )}
+                </FieldArray>
+
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full"
+                >
+                  {isSubmitting ? "Adding Product..." : "Add Product"}
+                </Button>
+              </Form>
+            )}
+          </Formik>
+        </CardContent>
+      </Card>
     </div>
   );
-};
+}
 
-export default AddProductForm;
+function getCroppedImg(imageSrc, pixelCrop, rotation = 0) {
+  const image = new Image();
+  image.src = imageSrc;
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const maxSize = Math.max(image.width, image.height);
+  const safeArea = 2 * ((maxSize / 2) * Math.sqrt(2));
+
+  canvas.width = safeArea;
+  canvas.height = safeArea;
+
+  ctx.translate(safeArea / 2, safeArea / 2);
+  ctx.rotate(getRadianAngle(rotation));
+  ctx.translate(-safeArea / 2, -safeArea / 2);
+
+  ctx.drawImage(
+    image,
+    safeArea / 2 - image.width * 0.5,
+    safeArea / 2 - image.height * 0.5
+  );
+
+  const data = ctx.getImageData(0, 0, safeArea, safeArea);
+
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+
+  ctx.putImageData(
+    data,
+    0 - safeArea / 2 + image.width * 0.5 - pixelCrop.x,
+    0 - safeArea / 2 + image.height * 0.5 - pixelCrop.y
+  );
+
+  return new Promise((resolve) => {
+    canvas.toBlob((file) => {
+      resolve(URL.createObjectURL(file));
+    }, "image/jpeg");
+  });
+}
+
+function getRadianAngle(degreeValue) {
+  return (degreeValue * Math.PI) / 180;
+}

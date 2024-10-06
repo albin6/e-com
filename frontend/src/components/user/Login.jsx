@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
-import { Button } from "../ui/Button";
-import { Input } from "../ui/Input";
-import { Label } from "../ui/Label";
+import { Input, Label, Button } from "../ui/ui-components";
 import { Smartphone } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { axiosInstance } from "../../config/axiosInstance";
@@ -110,7 +108,6 @@ export default function Login() {
                       name="email"
                       type="email"
                       autoComplete="email"
-                      required
                       className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 focus:z-10 sm:text-sm"
                       placeholder="Email address"
                     />
@@ -130,7 +127,6 @@ export default function Login() {
                       name="password"
                       type="password"
                       autoComplete="current-password"
-                      required
                       className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 focus:z-10 sm:text-sm"
                       placeholder="Password"
                     />
@@ -170,7 +166,10 @@ export default function Login() {
           <div className="text-center">
             <p className="mt-2 text-sm text-gray-600">
               Don't have an account?{" "}
-              <Link className="font-medium text-gray-800 hover:text-gray-700">
+              <Link
+                to={"/signup"}
+                className="font-medium text-gray-800 hover:text-gray-700"
+              >
                 Sign up
               </Link>
             </p>

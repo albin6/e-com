@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { Button } from "../ui/Button";
-import { Label } from "../ui/Label";
+import { Button, Label } from "../ui/ui-components";
 import { ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";

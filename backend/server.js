@@ -5,7 +5,6 @@ import session from "express-session";
 import cookieParser from "cookie-parser";
 import connectDB from "./config/connectDB.js";
 import user_router from "./routes/user_route.js";
-import "./utils/passport/passport.js";
 import passport from "passport";
 import admin_router from "./routes/admin_route.js";
 import { google_authentication } from "./controllers/google_controller.js";
