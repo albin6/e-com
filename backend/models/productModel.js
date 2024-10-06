@@ -1,5 +1,7 @@
+// models/Product.js
 import mongoose from "mongoose";
 import paginate from "mongoose-paginate-v2";
+import Attribute from "./Attribute";
 
 const product_schema = new mongoose.Schema({
   name: {
@@ -10,7 +12,7 @@ const product_schema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  is_listed: {
+  isListed: {
     type: Boolean,
     default: true,
   },
@@ -55,26 +57,21 @@ const product_schema = new mongoose.Schema({
         ref: "Attribute",
         required: true,
       },
-      terms: [
-        {
-          term: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Terms",
-            required: true,
-          },
-          sku: {
-            type: String,
-            required: true,
-          },
-        },
-      ],
+      value: {
+        type: String,
+        required: true,
+      },
+      sku: {
+        type: String,
+        required: true,
+      },
     },
   ],
   reviews: [
     {
       user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "User ",
         required: true,
       },
       message: {
@@ -87,22 +84,42 @@ const product_schema = new mongoose.Schema({
         min: 1,
         max: 5,
       },
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      },
+      updatedAt: {
+        type: Date,
+        default: Date.now,
+      },
     },
   ],
 });
 
+product_schema.pre("save", function (next) {
+  if (this.price <= 0) {
+    next(new Error("Price must be a positive number"));
+  } else if (this.discount < 0 || this.discount > this.price) {
+    next(
+      new Error(
+        "Discount must be a non-negative number less than or equal to the price"
+      )
+    );
+  } else if (this.stock < 0) {
+    next(new Error("Stock must be a non-negative number"));
+  } else {
+    next();
+  }
+});
+
 product_schema.plugin(paginate);
 
-const Product = mongoose.model("product", product_schema);
+// Add indexes for improved query performance
+product_schema.index({ name: 1 });
+product_schema.index({ category: 1 });
+product_schema.index({ brand: 1 });
+product_schema.index({ price: 1 });
+
+const Product = mongoose.model("Product", product_schema);
 
 export default Product;
-
-// Stock Keeping Unit (sku)
-
-// In the context of your e-commerce website, an SKU might look like this: IPHONE13-SPACEGRAY-4GB-128GB.
-// This SKU represents a specific variation of the iPhone 13 product:
-
-// => IPHONE13 is the product name
-// => SPACEGRAY is the color variation
-// => 4GB is the RAM variation
-// => 128GB is the storage variation

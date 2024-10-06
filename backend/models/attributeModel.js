@@ -1,6 +1,7 @@
+// models/Attribute.js
 import mongoose from "mongoose";
 
-const attribute_schema = new mongoose.Schema({
+const attributeSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -13,16 +14,16 @@ const attribute_schema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  created_at: {
+  createdAt: {
     type: Date,
     default: Date.now,
   },
-  updated_at: {
+  updatedAt: {
     type: Date,
     default: Date.now,
   },
 });
 
-const Attribute = mongoose.model("attribute", attribute_schema);
+const Attribute = mongoose.model("Attribute", attributeSchema);
 
 export default Attribute;
