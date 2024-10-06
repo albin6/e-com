@@ -60,7 +60,7 @@ function CategoryTable() {
           </tr>
         </thead>
         <tbody>
-          {data.categories_data.map((category) => (
+          {data.map((category) => (
             <tr key={category._id} className="border-b">
               <td className="border p-2">{category._id}</td>
               <td className="border p-2">{category.title}</td>

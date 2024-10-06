@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 
 export const Textarea = (props) => (
   <textarea
-    className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none"
+    className="w-full px-3 py-2 text-gray-700 border border-gray-400 rounded-lg focus:outline-none"
+    style={{ padding: "10px", border: "1px solid gray", borderRadius: "8px" }}
     {...props}
   />
 );

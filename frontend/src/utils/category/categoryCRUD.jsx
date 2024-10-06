@@ -2,7 +2,7 @@ import { adminAxiosInstance } from "../../config/axiosInstance";
 
 export const fetchCategories = async () => {
   const response = await adminAxiosInstance.get("/api/admin/categories");
-  return response.data;
+  return response.data.categories_data;
 };
 
 export const submitCategoryForm = async (newCategory) => {

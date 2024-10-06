@@ -93,8 +93,8 @@ const BrandManagement = () => {
       >
         {({ setFieldValue }) => (
           <Form className="mb-8">
-            <div className="flex gap-4">
-              <div className="flex flex-col w-1/2">
+            <div className="flex flex-col md:flex-row md:gap-4">
+              <div className="flex flex-col w-full md:w-1/2">
                 <Field
                   type="text"
                   name="name"
@@ -108,7 +108,7 @@ const BrandManagement = () => {
                 />
               </div>
 
-              <div className="flex flex-col w-1/3">
+              <div className="flex flex-col w-full md:w-1/3">
                 <input
                   type="file"
                   accept="image/*"
@@ -130,7 +130,7 @@ const BrandManagement = () => {
 
               <button
                 type="submit"
-                className="px-4 py-2 bg-gray-800 h-12 text-white rounded-md hover:bg-gray-600"
+                className="mt-4 md:mt-0 md:ml-4 px-4 py-2 bg-gray-800 h-12 text-white rounded-md hover:bg-gray-600"
               >
                 Add Brand
               </button>
@@ -142,13 +142,13 @@ const BrandManagement = () => {
       {/* Brands Table */}
       {!isError && (
         <div className="overflow-x-auto">
-          <table className="w-full table-auto">
+          <table className="min-w-full table-auto">
             <thead>
               <tr className="bg-gray-100">
-                <th className="px-4 py-2 w-3/12 text-left">Logo</th>
-                <th className="px-4 py-2 w-3/12 text-left">Name</th>
-                <th className="px-4 py-2 w-3/12 text-center">Status</th>
-                <th className="px-4 py-2 w-3/12 text-center">Action</th>
+                <th className="px-4 py-2 text-left">Logo</th>
+                <th className="px-4 py-2 text-left">Name</th>
+                <th className="px-4 py-2 text-center">Status</th>
+                <th className="px-4 py-2 text-center">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -156,7 +156,7 @@ const BrandManagement = () => {
                 <tr key={brand._id} className="border-b">
                   <td className="px-4 py-2">
                     <img
-                      src={`${import.meta.env.VITE_API_BASE_URL}/uploads/${
+                      src={`${import.meta.env.VITE_API_BASE_URL}/brands/${
                         brand.logo
                       }`}
                       alt={brand.name}

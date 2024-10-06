@@ -2,6 +2,7 @@ import { useSelector } from "react-redux";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchCategories } from "../utils/category/categoryCRUD";
 import { getBrandList } from "../utils/brand/brandCRUD";
+import { fetchProductsData } from "../utils/products/adminProductListing";
 
 export function useUserAuth() {
   const user = useSelector((state) => state.user.userInfo);
@@ -43,6 +44,26 @@ export const useBrandListMutation = (mutationFunc) => {
     mutationFn: mutationFunc,
     onSuccess: () => {
       queryClient.invalidateQueries("brands");
+    },
+  });
+};
+// -------------------------------------------------------------
+
+// -------------------------------------------------------------
+// for products
+export const useProductsData = () => {
+  return useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProductsData,
+  });
+};
+
+export const useProductsDataMutation = (mutationFunc) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: mutationFunc,
+    onSuccess: () => {
+      queryClient.invalidateQueries("products");
     },
   });
 };

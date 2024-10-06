@@ -10,6 +10,10 @@ const product_schema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  is_listed: {
+    type: Boolean,
+    default: true,
+  },
   images: [
     {
       type: String,
@@ -22,7 +26,7 @@ const product_schema = new mongoose.Schema({
   },
   discount: {
     type: Number,
-    required: true,
+    default: 0,
   },
   tags: [
     {
@@ -31,7 +35,7 @@ const product_schema = new mongoose.Schema({
     },
   ],
   stock: {
-    type: String,
+    type: Number,
     required: true,
   },
   category: {
@@ -64,6 +68,25 @@ const product_schema = new mongoose.Schema({
           },
         },
       ],
+    },
+  ],
+  reviews: [
+    {
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+      message: {
+        type: String,
+        required: true,
+      },
+      rating: {
+        type: Number,
+        required: true,
+        min: 1,
+        max: 5,
+      },
     },
   ],
 });

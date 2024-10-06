@@ -15,7 +15,7 @@ const ensureDirectoryExists = (directory) => {
 // Define the storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, "..", "..", "public", "uploads");
+    const uploadDir = path.join(__dirname, "..", "..", "public", "brands");
     ensureDirectoryExists(uploadDir);
     cb(null, uploadDir);
   },
@@ -32,3 +32,28 @@ const storage = multer.diskStorage({
 
 // Create multer instance
 export const upload = multer({ storage: storage }).single("logo");
+
+// ---------------------------------------------------------------------------------
+
+// Define the storage configuration
+const product_storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, "..", "..", "public", "products");
+    ensureDirectoryExists(uploadDir);
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    // Sanitize the original filename
+    const sanitizedOriginalName = file.originalname.replace(
+      /[^a-zA-Z0-9.]/g,
+      "_"
+    );
+    // creating new filename
+    cb(null, `${file.fieldname}_${Date.now()}_${sanitizedOriginalName}`);
+  },
+});
+
+// Create multer instance
+export const upload_prodcuct = multer({
+  storage: storage, // Your storage configuration
+}).array("images", 10);

@@ -3,7 +3,7 @@ import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { Input, Label, Button } from "../ui/ui-components";
 import { Smartphone } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { axiosInstance } from "../../config/axiosInstance";
 import { useDispatch } from "react-redux";
 import { setUserDetails } from "../../redux/Slices/userSlice";
@@ -25,7 +25,7 @@ const validationSchema = Yup.object({
 
 export default function Login() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+
   const [error, setError] = useState("");
   const handleSubmit = async (values) => {
     console.log("Login attempted with:", values);
@@ -43,7 +43,6 @@ export default function Login() {
       }
 
       dispatch(setUserDetails(response.data.user));
-      navigate("/");
     } catch (error) {
       if (error?.response?.status === 401) {
         setError(error?.response?.data?.message); // "Invalid email or password"

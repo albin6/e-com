@@ -1,4 +1,4 @@
-import mongoose, { ModifiedPathsSnapshot } from "mongoose";
+import mongoose from "mongoose";
 
 const attribute_schema = new mongoose.Schema({
   name: {
@@ -19,7 +19,7 @@ const attribute_schema = new mongoose.Schema({
   },
   updated_at: {
     type: Date,
-    required: true,
+    default: Date.now,
   },
 });
 
