@@ -55,5 +55,5 @@ const product_storage = multer.diskStorage({
 
 // Create multer instance
 export const upload_prodcuct = multer({
-  storage: storage, // Your storage configuration
-}).array("images", 10);
+  storage: product_storage, // Your storage configuration
+}).any();

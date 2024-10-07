@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { PlusCircle, X, Upload, Crop, ShoppingBag } from "lucide-react";
 import Cropper from "react-easy-crop";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 
 import {
   Card,
@@ -11,145 +12,123 @@ import {
   Label,
   Input,
   Button,
-} from "../ui/ui-components";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/ui-components";
 import {
   useProductsData,
   useProductsDataMutation,
 } from "../../hooks/CustomHooks";
-import { addNewProduct } from "../../utils/products/adminProductListing";
+import {
+  addNewProduct,
+  fetchProductsData,
+} from "../../utils/products/adminProductListing";
 
-export default function Component() {
-  const { data, isError, isLoading } = useProductsData();
-  const [brandData, setBrandData] = useState([]);
-  const [categoryData, setCategoryData] = useState([]);
-  const [productData, setProductData] = useState([]);
+export default function ProductForm() {
+  const { data, isError, isLoading } = useProductsData(fetchProductsData);
   const { mutate: addProduct } = useProductsDataMutation(addNewProduct);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    price: "",
-    discount: "",
-    category: "",
-    brand: "",
-    stock: "",
-    tags: [],
-    variations: [{ attribute: "", terms: [{ term: "", sku: "" }] }],
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      name: "",
+      brand: "",
+      description: "",
+      category: "",
+      price: "",
+      discount: "",
+      variants: [
+        {
+          color: "",
+          ram: "",
+          storage: "",
+          price: 0,
+          stock: 0,
+          images: [],
+          sku: "",
+        },
+      ],
+      specifications: {
+        processor: "",
+        battery: "",
+        camera: { front: "", rear: "" },
+        display: { size: "", resolution: "", type: "" },
+        os: "",
+      },
+      tags: [],
+      releaseDate: "",
+      isFeatured: false,
+    },
   });
-  const [errors, setErrors] = useState({});
-  const [images, setImages] = useState([]);
-  const [error, setError] = useState("");
+  const {
+    fields: variantFields,
+    append: appendVariant,
+    remove: removeVariant,
+  } = useFieldArray({
+    control,
+    name: "variants",
+  });
+
   const [croppingImageIndex, setCroppingImageIndex] = useState(null);
+  const [croppingVariantIndex, setCroppingVariantIndex] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
-    setBrandData(data?.brand);
-    setCategoryData(data?.category);
-    setProductData(data?.products);
+    setBrands(data?.brand);
+    setCategories(data?.category);
   }, [data]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+  const onSubmit = (data) => {
+    console.log(data);
+    // Here you would typically send the data to your API
+    addProduct(data);
   };
 
-  const handleTagInputChange = (e) => {
-    setTagInput(e.target.value);
-  };
-
-  const handleTagInputKeyDown = (e) => {
-    if (e.key === "Enter" && tagInput.trim()) {
-      e.preventDefault();
-      setFormData((prevData) => ({
-        ...prevData,
-        tags: [...prevData.tags, tagInput.trim()],
-      }));
-      setTagInput("");
-    }
-  };
-
-  const removeTag = (indexToRemove) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      tags: prevData.tags.filter((_, index) => index !== indexToRemove),
-    }));
-  };
-
-  const handleVariationChange = (index, field, value) => {
-    const newVariations = [...formData.variations];
-    newVariations[index][field] = value;
-    setFormData((prevData) => ({
-      ...prevData,
-      variations: newVariations,
-    }));
-  };
-
-  const handleTermChange = (variationIndex, termIndex, field, value) => {
-    const newVariations = [...formData.variations];
-    newVariations[variationIndex].terms[termIndex][field] = value;
-    setFormData((prevData) => ({
-      ...prevData,
-      variations: newVariations,
-    }));
-  };
-
-  const addVariation = () => {
-    setFormData((prevData) => ({
-      ...prevData,
-      variations: [
-        ...prevData.variations,
-        { attribute: "", terms: [{ term: "", sku: "" }] },
-      ],
-    }));
-  };
-
-  const removeVariation = (index) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      variations: prevData.variations.filter((_, i) => i !== index),
-    }));
-  };
-
-  const addTerm = (variationIndex) => {
-    const newVariations = [...formData.variations];
-    newVariations[variationIndex].terms.push({ term: "", sku: "" });
-    setFormData((prevData) => ({
-      ...prevData,
-      variations: newVariations,
-    }));
-  };
-
-  const removeTerm = (variationIndex, termIndex) => {
-    const newVariations = [...formData.variations];
-    newVariations[variationIndex].terms = newVariations[
-      variationIndex
-    ].terms.filter((_, i) => i !== termIndex);
-    setFormData((prevData) => ({
-      ...prevData,
-      variations: newVariations,
-    }));
-  };
-
-  const handleImageUpload = (event) => {
+  const handleImageUpload = (event, variantIndex) => {
     const files = Array.from(event.target.files);
-    setImages((prevImages) => [
-      ...prevImages,
-      ...files.map((file) => ({ file, preview: URL.createObjectURL(file) })),
-    ]);
+    const newImages = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+
+    const updatedVariants = [...variantFields];
+    updatedVariants[variantIndex].images = [
+      ...updatedVariants[variantIndex].images,
+      ...newImages,
+    ];
+
+    // Update the form data
+    reset({
+      ...control._formValues,
+      variants: updatedVariants,
+    });
   };
 
-  const removeImage = (index) => {
-    setImages((prevImages) => prevImages.filter((_, i) => i !== index));
+  const removeImage = (variantIndex, imageIndex) => {
+    const updatedVariants = [...variantFields];
+    updatedVariants[variantIndex].images.splice(imageIndex, 1);
+
+    // Update the form data
+    reset({
+      ...control._formValues,
+      variants: updatedVariants,
+    });
   };
 
-  const startCropping = (index) => {
-    setCroppingImageIndex(index);
+  const startCropping = (variantIndex, imageIndex) => {
+    setCroppingVariantIndex(variantIndex);
+    setCroppingImageIndex(imageIndex);
   };
 
   const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
@@ -159,111 +138,42 @@ export default function Component() {
   const handleCropSave = useCallback(async () => {
     try {
       const croppedImage = await getCroppedImg(
-        images[croppingImageIndex].preview,
-        croppedAreaPixels,
-        0
+        variantFields[croppingVariantIndex].images[croppingImageIndex].preview,
+        croppedAreaPixels
       );
-      const newImages = [...images];
-      newImages[croppingImageIndex] = {
-        ...newImages[croppingImageIndex],
+
+      const updatedVariants = [...variantFields];
+      updatedVariants[croppingVariantIndex].images[croppingImageIndex] = {
+        ...updatedVariants[croppingVariantIndex].images[croppingImageIndex],
         preview: croppedImage,
-        file: await fetch(croppedImage).then((r) => r.blob()),
       };
-      setImages(newImages);
+
+      // Update the form data
+      reset({
+        ...control._formValues,
+        variants: updatedVariants,
+      });
+
+      setCroppingVariantIndex(null);
       setCroppingImageIndex(null);
     } catch (e) {
       console.error(e);
     }
-  }, [croppingImageIndex, images, croppedAreaPixels]);
-
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.name) newErrors.name = "Product name is required";
-    if (!formData.description)
-      newErrors.description = "Description is required";
-    if (!formData.price) newErrors.price = "Price is required";
-    if (formData.price && isNaN(formData.price))
-      newErrors.price = "Price must be a number";
-    if (
-      formData.discount &&
-      (isNaN(formData.discount) ||
-        formData.discount < 0 ||
-        formData.discount > 100)
-    ) {
-      newErrors.discount = "Discount must be a number between 0 and 100";
-    }
-    if (!formData.category) newErrors.category = "Category is required";
-    if (!formData.brand) newErrors.brand = "Brand is required";
-    if (!formData.stock) newErrors.stock = "Stock is required";
-    if (formData.stock && isNaN(formData.stock))
-      newErrors.stock = "Stock must be a number";
-
-    formData.variations.forEach((variation, index) => {
-      if (!variation.attribute) {
-        newErrors[`variation${index}`] = "Attribute is required";
-      }
-      variation.terms.forEach((term, termIndex) => {
-        if (!term.term) {
-          newErrors[`variation${index}term${termIndex}`] = "Term is required";
-        }
-        if (!term.sku) {
-          newErrors[`variation${index}sku${termIndex}`] = "SKU is required";
-        }
-      });
-    });
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    setIsSubmitting(true);
-    try {
-      const formDataToSend = new FormData();
-      Object.keys(formData).forEach((key) => {
-        if (key === "variations" || key === "tags") {
-          formDataToSend.append(key, JSON.stringify(formData[key]));
-        } else {
-          formDataToSend.append(key, formData[key]);
-        }
-      });
-      images.forEach((image, index) => {
-        formDataToSend.append(`images`, image.file);
-      });
-
-      console.log("Form data:", formDataToSend);
-      addProduct(formDataToSend);
-      console.log("Product added successfully");
-      setFormData({
-        name: "",
-        description: "",
-        price: "",
-        discount: "",
-        category: "",
-        brand: "",
-        stock: "",
-        tags: [],
-        variations: [{ attribute: "", terms: [{ term: "", sku: "" }] }],
-      });
-      setImages([]);
-      setError("");
-    } catch (error) {
-      console.error("Error adding product:", error);
-      setError("An error occurred while adding the product");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  }, [
+    croppingVariantIndex,
+    croppingImageIndex,
+    variantFields,
+    croppedAreaPixels,
+    reset,
+    control._formValues,
+  ]);
 
   if (isLoading) {
-    return <h2>Loading....</h2>;
+    return <h3>Loading....</h3>;
   }
 
   if (isError) {
-    return <h2>Error....</h2>;
+    return <h3>Error....</h3>;
   }
 
   return (
@@ -276,483 +186,488 @@ export default function Component() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {error && (
-            <div className="mb-4 p-4 text-center text-red-700 bg-red-100 rounded-md">
-              {error}
-            </div>
-          )}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-              <div>
-                <Label
-                  htmlFor="name"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Product Name
-                </Label>
+              <div className="w-full">
+                <Label htmlFor="name">Product Name</Label>
                 <Input
                   id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="Enter product name"
-                  className={`mt-1 block w-full rounded-md ${
-                    errors.name ? "border-red-500" : "border-gray-300"
-                  }`}
+                  {...register("name", {
+                    required: "Product name is required",
+                    minLength: {
+                      value: 3,
+                      message: "Minimum length is 3 characters",
+                    },
+                  })}
                 />
                 {errors.name && (
-                  <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.name.message}
+                  </p>
                 )}
               </div>
               <div>
-                <Label
-                  htmlFor="stock"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Stock
-                </Label>
-                <Input
-                  id="stock"
-                  name="stock"
-                  type="number"
-                  value={formData.stock}
-                  onChange={handleInputChange}
-                  placeholder="Enter stock quantity"
-                  className={`mt-1 block w-full rounded-md ${
-                    errors.stock ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.stock && (
-                  <p className="text-red-500 text-xs mt-1">{errors.stock}</p>
-                )}
-              </div>
-              <div>
-                <Label
-                  htmlFor="brand"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Brand
-                </Label>
-                <select
-                  id="brand"
+                <Label htmlFor="brand">Brand</Label>
+                <Controller
                   name="brand"
-                  value={formData.brand}
-                  onChange={handleInputChange}
-                  className={`mt-1 block w-full rounded-md ${
-                    errors.brand ? "border-red-500" : "border-gray-300"
-                  }`}
-                >
-                  <option value="">Select Brand</option>
-                  {brandData &&
-                    brandData.map((brand) => (
-                      <option key={brand._id} value={brand.name}>
-                        {brand.name}
-                      </option>
-                    ))}
-                </select>
+                  control={control}
+                  rules={{ required: "Brand is required" }}
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a brand" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {brands &&
+                          brands.map((brand) => (
+                            <SelectItem key={brand._id} value={brand.name}>
+                              {brand.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
                 {errors.brand && (
-                  <p className="text-red-500 text-xs mt-1">{errors.brand}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.brand.message}
+                  </p>
                 )}
               </div>
               <div>
-                <Label
-                  htmlFor="category"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Category
-                </Label>
-                <select
-                  id="category"
+                <Label htmlFor="category">Category</Label>
+                <Controller
                   name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  className={`mt-1 block w-full rounded-md ${
-                    errors.category ? "border-red-500" : "border-gray-300"
-                  }`}
-                >
-                  <option value="">Select Category</option>
-                  {categoryData &&
-                    categoryData.map((category) => (
-                      <option key={category._id} value={category.title}>
-                        {category.title}
-                      </option>
-                    ))}
-                </select>
+                  control={control}
+                  rules={{ required: "Category is required" }}
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories &&
+                          categories.map((category) => (
+                            <SelectItem
+                              key={category._id}
+                              value={category.title}
+                            >
+                              {category.title}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
                 {errors.category && (
-                  <p className="text-red-500 text-xs mt-1">{errors.category}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.category.message}
+                  </p>
                 )}
               </div>
               <div>
-                <Label
-                  htmlFor="price"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Price
-                </Label>
+                <Label htmlFor="price">Price</Label>
                 <Input
                   id="price"
-                  name="price"
                   type="number"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  placeholder="Enter price"
-                  className={`mt-1 block w-full rounded-md ${
-                    errors.price ? "border-red-500" : "border-gray-300"
-                  }`}
+                  {...register("price", {
+                    required: "Price is required",
+                    min: { value: 0, message: "Price must be positive" },
+                  })}
                 />
                 {errors.price && (
-                  <p className="text-red-500 text-xs mt-1">{errors.price}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.price.message}
+                  </p>
                 )}
               </div>
               <div>
-                <Label
-                  htmlFor="discount"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Discount (%)
-                </Label>
+                <Label htmlFor="discount">Discount (%)</Label>
                 <Input
                   id="discount"
-                  name="discount"
                   type="number"
-                  value={formData.discount}
-                  onChange={handleInputChange}
-                  placeholder="Enter discount percentage"
-                  className={`mt-1 block w-full rounded-md ${
-                    errors.discount ? "border-red-500" : "border-gray-300"
-                  }`}
+                  {...register("discount", {
+                    required: "Discount is required",
+                    min: {
+                      value: 0,
+                      message: "Discount must be between 0 and 100",
+                    },
+                    max: {
+                      value: 100,
+                      message: "Discount must be between 0 and 100",
+                    },
+                  })}
                 />
                 {errors.discount && (
-                  <p className="text-red-500 text-xs mt-1">{errors.discount}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.discount.message}
+                  </p>
                 )}
               </div>
             </div>
 
-            <div className="mb-4 flex flex-col">
-              <Label
-                htmlFor="description"
-                className="text-sm font-medium text-gray-700"
-              >
-                Description
-              </Label>
+            <div>
+              <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                rows={3}
-                placeholder="Enter product description"
-                className={`mt-1 block w-full rounded-md ${
-                  errors.description ? "border-red-500" : "border-gray-300"
-                }`}
+                {...register("description", {
+                  required: "Description is required",
+                  minLength: {
+                    value: 10,
+                    message: "Minimum length is 10 characters",
+                  },
+                })}
               />
               {errors.description && (
                 <p className="text-red-500 text-xs mt-1">
-                  {errors.description}
+                  {errors.description.message}
                 </p>
               )}
             </div>
 
-            <div className="mb-4">
-              <Label
-                htmlFor="tags"
-                className="text-sm font-medium text-gray-700"
-              >
-                Tags
-              </Label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {formData.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="bg-gray-200 px-2 py-1 rounded-full text-sm flex items-center"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(index)}
-                      className="ml-1 text-red-500 hover:text-red-700"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <Input
-                id="tags"
-                value={tagInput}
-                onChange={handleTagInputChange}
-                onKeyDown={handleTagInputKeyDown}
-                placeholder="Enter tags and press Enter"
-                className="mt-1 block w-full rounded-md border-gray-300"
-              />
-            </div>
-
-            <div className="mb-4">
-              <Label className="text-sm font-medium text-gray-700 mb-2">
-                Product Images
-              </Label>
-              <div className="mt-1 flex items-center">
-                <Label
-                  htmlFor="image-upload"
-                  className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  <Upload className="w-5 h-5 mr-2" />
-                  Upload Images
-                  <Input
-                    id="image-upload"
-                    type="file"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                    multiple
-                    accept="image/*"
-                  />
-                </Label>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                {images.map((image, index) => (
-                  <div key={index} className="relative">
-                    <img
-                      src={image.preview}
-                      alt={`Product ${index + 1}`}
-                      className="h-24 w-full object-cover rounded-md"
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-0 right-0 -mt-2 -mr-2"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => startCropping(index)}
-                      variant="secondary"
-                      size="icon"
-                      className="absolute bottom-0 right-0 mb-1 mr-1"
-                    >
-                      <Crop className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {croppingImageIndex !== null && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <Card className="w-96">
-                  <CardContent className="p-4">
-                    <div className="relative h-64 mb-4">
-                      <Cropper
-                        image={images[croppingImageIndex].preview}
-                        crop={crop}
-                        zoom={zoom}
-                        aspect={4 / 3}
-                        onCropChange={setCrop}
-                        onCropComplete={onCropComplete}
-                        onZoomChange={setZoom}
-                      />
-                    </div>
-                    <div className="flex justify-between">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setCroppingImageIndex(null)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="button" onClick={handleCropSave}>
-                        Save Crop
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
             <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2">
-                Variations
-              </Label>
-              {formData.variations.map((variation, index) => (
-                <Card key={index} className="mb-4">
+              <Label>Variants</Label>
+              {variantFields.map((field, variantIndex) => (
+                <Card key={field.id} className="mb-4">
                   <CardContent className="p-4">
-                    <div className="mb-4">
-                      <Label
-                        htmlFor={`variation-${index}-attribute`}
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Attribute
-                      </Label>
-                      <Input
-                        id={`variation-${index}-attribute`}
-                        value={variation.attribute}
-                        onChange={(e) =>
-                          handleVariationChange(
-                            index,
-                            "attribute",
-                            e.target.value
-                          )
-                        }
-                        placeholder="e.g., Color, Size"
-                        className={`mt-1 block w-full rounded-md ${
-                          errors[`variation${index}`]
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                      />
-                      {errors[`variation${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors[`variation${index}`]}
-                        </p>
-                      )}
-                    </div>
-                    {variation.terms.map((term, termIndex) => (
-                      <div
-                        key={termIndex}
-                        className="flex items-center space-x-2 mt-2"
-                      >
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor={`variants.${variantIndex}.color`}>
+                          Color
+                        </Label>
                         <Input
-                          value={term.term}
-                          onChange={(e) =>
-                            handleTermChange(
-                              index,
-                              termIndex,
-                              "term",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Term"
-                          className={`flex-1 ${
-                            errors[`variation${index}term${termIndex}`]
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
+                          {...register(`variants.${variantIndex}.color`, {
+                            required: "Color is required",
+                          })}
                         />
-                        <Input
-                          value={term.sku}
-                          onChange={(e) =>
-                            handleTermChange(
-                              index,
-                              termIndex,
-                              "sku",
-                              e.target.value
-                            )
-                          }
-                          placeholder="SKU"
-                          className={`flex-1 ${
-                            errors[`variation${index}sku${termIndex}`]
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
-                        />
-                        <Button
-                          type="button"
-                          onClick={() => removeTerm(index, termIndex)}
-                          variant="destructive"
-                          size="icon"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
                       </div>
-                    ))}
-                    {(errors[`variation${index}term0`] ||
-                      errors[`variation${index}sku0`]) && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors[`variation${index}term0`] ||
-                          errors[`variation${index}sku0`]}
-                      </p>
-                    )}
-                    <div className="flex w-full justify-between mt-2">
-                      <Button
-                        type="button"
-                        onClick={() => addTerm(index)}
-                        variant="outline"
-                        size="sm"
-                        className="bg-gray-800 hover:bg-gray-600 text-white flex items-center"
-                      >
-                        <PlusCircle className="w-4 h-4 mr-2" /> Add Term
-                      </Button>
-                      {index > 0 && (
-                        <Button
-                          type="button"
-                          onClick={() => removeVariation(index)}
-                          variant="destructive"
-                          size="sm"
-                          className="text-red-600"
-                        >
-                          Remove Variation
-                        </Button>
-                      )}
+                      <div>
+                        <Label htmlFor={`variants.${variantIndex}.ram`}>
+                          RAM
+                        </Label>
+                        <Input
+                          {...register(`variants.${variantIndex}.ram`, {
+                            required: "RAM is required",
+                          })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`variants.${variantIndex}.storage`}>
+                          Storage
+                        </Label>
+                        <Input
+                          {...register(`variants.${variantIndex}.storage`, {
+                            required: "Storage is required",
+                          })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`variants.${variantIndex}.price`}>
+                          Price
+                        </Label>
+                        <Input
+                          type="number"
+                          {...register(`variants.${variantIndex}.price`, {
+                            required: "Price is required",
+                            min: {
+                              value: 0,
+                              message: "Price must be positive",
+                            },
+                          })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`variants.${variantIndex}.stock`}>
+                          Stock
+                        </Label>
+                        <Input
+                          type="number"
+                          {...register(`variants.${variantIndex}.stock`, {
+                            required: "Stock is required",
+                            min: {
+                              value: 0,
+                              message: "Stock must be positive",
+                            },
+                          })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`variants.${variantIndex}.sku`}>
+                          SKU
+                        </Label>
+                        <Input
+                          {...register(`variants.${variantIndex}.sku`, {
+                            required: "SKU is required",
+                          })}
+                        />
+                      </div>
                     </div>
+                    <div className="mt-4">
+                      <Label>Images</Label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {field.images.map((image, imageIndex) => (
+                          <div key={imageIndex} className="relative">
+                            <img
+                              src={image.preview}
+                              alt={`Variant ${variantIndex + 1} Image ${
+                                imageIndex + 1
+                              }`}
+                              className="w-20 h-20 object-cover rounded"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                removeImage(variantIndex, imageIndex)
+                              }
+                              className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                startCropping(variantIndex, imageIndex)
+                              }
+                              className="absolute bottom-0 right-0 bg-blue-500 text-white rounded-full p-1"
+                            >
+                              <Crop className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <Input
+                        type="file"
+                        onChange={(e) => handleImageUpload(e, variantIndex)}
+                        multiple
+                        accept="image/*"
+                        className="mt-2"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => removeVariant(variantIndex)}
+                      className="mt-2 bg-red-600 text-white"
+                      variant="destructive"
+                    >
+                      Remove Variant
+                    </Button>
                   </CardContent>
                 </Card>
               ))}
               <Button
                 type="button"
-                onClick={addVariation}
-                className="bg-gray-800 hover:bg-gray-600 text-white flex items-center"
-                variant="outline"
+                className="bg-gray-800 hover:bg-gray-600 text-white"
+                onClick={() =>
+                  appendVariant({
+                    color: "",
+                    ram: "",
+                    storage: "",
+                    price: 0,
+                    stock: 0,
+                    images: [],
+                    sku: "",
+                  })
+                }
               >
-                <PlusCircle className="w-5 h-5 mr-2" /> Add Variation
+                Add Variant
               </Button>
+            </div>
+
+            <div>
+              <Label className="font-semibold">Specifications</Label>
+              <br />
+              <hr />
+              <br />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="specifications.processor">Processor</Label>
+                  <Input
+                    {...register("specifications.processor", {
+                      required: "Processor is required",
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="specifications.battery">Battery</Label>
+                  <Input
+                    {...register("specifications.battery", {
+                      required: "Battery is required",
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="specifications.camera.front">
+                    Front Camera
+                  </Label>
+                  <Input
+                    {...register("specifications.camera.front", {
+                      required: "Front camera is required",
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="specifications.camera.rear">
+                    Rear Camera
+                  </Label>
+                  <Input
+                    {...register("specifications.camera.rear", {
+                      required: "Rear camera is required",
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="specifications.display.size">
+                    Display Size
+                  </Label>
+                  <Input
+                    {...register("specifications.display.size", {
+                      required: "Display size is required",
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="specifications.display.resolution">
+                    Display Resolution
+                  </Label>
+                  <Input
+                    {...register("specifications.display.resolution", {
+                      required: "Display resolution is required",
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="specifications.display.type">
+                    Display Type
+                  </Label>
+                  <Input
+                    {...register("specifications.display.type", {
+                      required: "Display type is required",
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="specifications.os">Operating System</Label>
+                  <Input
+                    {...register("specifications.os", {
+                      required: "Operating system is required",
+                    })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="tags">Tags (comma-separated)</Label>
+              <Input {...register("tags")} />
+            </div>
+
+            <div>
+              <Label htmlFor="releaseDate">Release Date</Label>
+              <Input
+                type="date"
+                {...register("releaseDate", {
+                  required: "Release date is required",
+                })}
+              />
+              {errors.releaseDate && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.releaseDate.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="isFeatured"
+                {...register("isFeatured")}
+                className="mr-2"
+              />
+              <Label htmlFor="isFeatured">Featured Product</Label>
             </div>
 
             <Button
               type="submit"
-              disabled={isSubmitting}
               className="w-full bg-gray-800 hover:bg-gray-600 text-white"
             >
-              {isSubmitting ? "Adding Product..." : "Add Product"}
+              Add Product
             </Button>
           </form>
         </CardContent>
       </Card>
+
+      {croppingImageIndex !== null && croppingVariantIndex !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-96">
+            <CardContent className="p-4">
+              <div className="relative h-64 mb-4">
+                <Cropper
+                  image={
+                    variantFields[croppingVariantIndex].images[
+                      croppingImageIndex
+                    ].preview
+                  }
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={4 / 3}
+                  onCropChange={setCrop}
+                  onCropComplete={onCropComplete}
+                  onZoomChange={setZoom}
+                />
+              </div>
+              <div className="flex justify-between">
+                <Button
+                  onClick={() => {
+                    setCroppingVariantIndex(null);
+                    setCroppingImageIndex(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleCropSave}>Save Crop</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
 
-function getCroppedImg(imageSrc, pixelCrop, rotation = 0) {
+// Helper function to crop the image
+function getCroppedImg(imageSrc, pixelCrop) {
   const image = new Image();
   image.src = imageSrc;
   const canvas = document.createElement("canvas");
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
   const ctx = canvas.getContext("2d");
-
-  const maxSize = Math.max(image.width, image.height);
-  const safeArea = 2 * ((maxSize / 2) * Math.sqrt(2));
-
-  canvas.width = safeArea;
-  canvas.height = safeArea;
-
-  ctx.translate(safeArea / 2, safeArea / 2);
-  ctx.rotate(getRadianAngle(rotation));
-  ctx.translate(-safeArea / 2, -safeArea / 2);
 
   ctx.drawImage(
     image,
-    safeArea / 2 - image.width * 0.5,
-    safeArea / 2 - image.height * 0.5
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
   );
 
-  const data = ctx.getImageData(0, 0, safeArea, safeArea);
-
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
-
-  ctx.putImageData(
-    data,
-    0 - safeArea / 2 + image.width * 0.5 - pixelCrop.x,
-    0 - safeArea / 2 + image.height * 0.5 - pixelCrop.y
-  );
-
-  return new Promise((resolve) => {
-    canvas.toBlob((file) => {
-      resolve(URL.createObjectURL(file));
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Canvas is empty"));
+        return;
+      }
+      resolve(URL.createObjectURL(blob));
     }, "image/jpeg");
   });
-}
-
-function getRadianAngle(degreeValue) {
-  return (degreeValue * Math.PI) / 180;
 }

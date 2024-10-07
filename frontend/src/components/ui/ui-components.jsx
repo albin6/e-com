@@ -1,29 +1,131 @@
-import React from "react";
 import { Link } from "react-router-dom";
 
-export const Textarea = (props) => (
-  <textarea
-    className="w-full px-3 py-2 text-gray-700 border border-gray-400 rounded-lg focus:outline-none"
-    style={{ padding: "10px", border: "1px solid gray", borderRadius: "8px" }}
-    {...props}
-  />
-);
+import React, { createContext, useContext, useState } from "react";
+import { ChevronDown } from "lucide-react";
 
-export const Select = ({ children, ...props }) => (
-  <select
-    className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none"
-    {...props}
-  >
-    {children}
-  </select>
-);
+const SelectContext = createContext(null);
 
-export const SelectTrigger = ({ children }) => <div>{children}</div>;
-export const SelectValue = ({ children }) => <span>{children}</span>;
-export const SelectContent = ({ children }) => <div>{children}</div>;
-export const SelectItem = ({ value, children }) => (
-  <option value={value}>{children}</option>
-);
+export function Select({ children, onValueChange, defaultValue = "" }) {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(defaultValue);
+
+  const onChange = (newValue) => {
+    setValue(newValue);
+    onValueChange(newValue);
+    setOpen(false);
+  };
+
+  return (
+    <SelectContext.Provider value={{ open, setOpen, value, onChange }}>
+      <div className="relative inline-block w-full">{children}</div>
+    </SelectContext.Provider>
+  );
+}
+
+export function SelectTrigger({ children }) {
+  const context = useContext(SelectContext);
+  if (!context) throw new Error("SelectTrigger must be used within a Select");
+
+  return (
+    <button
+      type="button"
+      onClick={() => context.setOpen(!context.open)}
+      className="flex items-center justify-between w-full px-4 py-2 text-sm bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+    >
+      {children}
+      <ChevronDown
+        className="w-5 h-5 ml-2 -mr-1 text-gray-400"
+        aria-hidden="true"
+      />
+    </button>
+  );
+}
+
+export function SelectContent({ children }) {
+  const context = useContext(SelectContext);
+  if (!context) throw new Error("SelectContent must be used within a Select");
+
+  if (!context.open) return null;
+
+  return (
+    <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg">
+      <ul className="py-1 overflow-auto text-base rounded-md max-h-60 focus:outline-none sm:text-sm">
+        {children}
+      </ul>
+    </div>
+  );
+}
+
+export function SelectItem({ children, value }) {
+  const context = useContext(SelectContext);
+  if (!context) throw new Error("SelectItem must be used within a Select");
+
+  return (
+    <li
+      className={`cursor-default select-none relative py-2 pl-3 pr-9 ${
+        context.value === value ? "text-white bg-primary" : "text-gray-900"
+      }`}
+      onClick={() => context.onChange(value)}
+    >
+      {children}
+    </li>
+  );
+}
+
+export function SelectValue({ placeholder }) {
+  const context = useContext(SelectContext);
+  if (!context) throw new Error("SelectValue must be used within a Select");
+
+  return <span>{context.value || placeholder}</span>;
+}
+
+export default function Component() {
+  const handleValueChange = (value) => {
+    console.log("Selected value:", value);
+  };
+
+  return (
+    <div className="w-full max-w-xs mx-auto mt-8">
+      <Select onValueChange={handleValueChange}>
+        <SelectTrigger>
+          <SelectValue placeholder="Select an option" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="option1">Option 1</SelectItem>
+          <SelectItem value="option2">Option 2</SelectItem>
+          <SelectItem value="option3">Option 3</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+// export const SelectTrigger = ({ children }) => <div>{children}</div>;
+// export const SelectValue = ({ children }) => <span>{children}</span>;
+// export const SelectContent = ({ children }) => <div>{children}</div>;
+// export const SelectItem = ({ value, children }) => (
+//   <option value={value}>{children}</option>
+// );
+
+export const Textarea = React.forwardRef((props, ref) => {
+  return (
+    <textarea
+      ref={ref}
+      className="w-full px-3 py-2 text-gray-700 border border-gray-400 rounded-lg focus:outline-none"
+      style={{ padding: "10px", border: "1px solid gray", borderRadius: "8px" }}
+      {...props}
+    />
+  );
+});
+
+// export const Select = ({ children, ...props }) => (
+//   <select
+//     className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none"
+//     {...props}
+//   >
+//     {children}
+//   </select>
+// );
 
 export const Card = ({ children, className, ...props }) => (
   <div className={`bg-white shadow-md rounded-lg ${className}`} {...props}>
@@ -77,14 +179,15 @@ export const IconButton = ({ icon, label, onClick }) => (
   </button>
 );
 
-export function Input(props) {
+export const Input = React.forwardRef((props, ref) => {
   return (
     <input
+      ref={ref}
       {...props}
       className={`border rounded px-3 py-2 w-full ${props.className || ""}`}
     />
   );
-}
+});
 
 export function Label({ children, ...props }) {
   return <label {...props}>{children}</label>;

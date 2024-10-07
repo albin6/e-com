@@ -1,9 +1,10 @@
 import mongoose from "mongoose";
 
-const category_schema = new mongoose.Schema({
+const categorySchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
+    trim: true,
   },
   status: {
     type: Boolean,
@@ -19,6 +20,6 @@ const category_schema = new mongoose.Schema({
   },
 });
 
-const Category = mongoose.model("categorie", category_schema);
+const Category = mongoose.model("categorie", categorySchema);
 
 export default Category;
