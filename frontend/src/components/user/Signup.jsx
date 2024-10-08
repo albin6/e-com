@@ -138,7 +138,7 @@ export default function Signup() {
       <div className="max-w-7xl w-full fixed content-center top-28 grid grid-cols-2 gap-8 py-8 px-14 bg-white rounded-xl shadow-2xl border border-gray-200">
         <div className="hidden md:block h-[700px] ml-3 mt-2">
           <img
-            src="/login.jpg" // Update with your image path
+            src="/Login-Signup/login.jpg"
             alt="Smartphone illustration"
             className="h-full rounded-lg"
           />

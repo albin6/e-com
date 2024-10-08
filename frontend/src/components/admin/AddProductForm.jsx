@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { PlusCircle, X, Upload, Crop, ShoppingBag } from "lucide-react";
-import Cropper from "react-easy-crop";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
+import "react-image-crop/dist/ReactCrop.css";
+import CropperModal from "../imageCropper/CropperModal";
 
 import {
   Card,
@@ -32,6 +33,7 @@ export default function ProductForm() {
   const { mutate: addProduct } = useProductsDataMutation(addNewProduct);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
+
   const {
     register,
     control,
@@ -69,6 +71,7 @@ export default function ProductForm() {
       isFeatured: false,
     },
   });
+
   const {
     fields: variantFields,
     append: appendVariant,
@@ -78,22 +81,17 @@ export default function ProductForm() {
     name: "variants",
   });
 
-  const [croppingImageIndex, setCroppingImageIndex] = useState(null);
-  const [croppingVariantIndex, setCroppingVariantIndex] = useState(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [currentImage, setCurrentImage] = useState(null);
+  const [currentVariantIndex, setCurrentVariantIndex] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(null);
 
   useEffect(() => {
-    setBrands(data?.brand);
-    setCategories(data?.category);
+    if (data) {
+      setCategories(data.categories || []);
+      setBrands(data.brands || []);
+    }
   }, [data]);
-
-  const onSubmit = (data) => {
-    console.log(data);
-    // Here you would typically send the data to your API
-    addProduct(data);
-  };
 
   const handleImageUpload = (event, variantIndex) => {
     const files = Array.from(event.target.files);
@@ -108,7 +106,6 @@ export default function ProductForm() {
       ...newImages,
     ];
 
-    // Update the form data
     reset({
       ...control._formValues,
       variants: updatedVariants,
@@ -119,7 +116,6 @@ export default function ProductForm() {
     const updatedVariants = [...variantFields];
     updatedVariants[variantIndex].images.splice(imageIndex, 1);
 
-    // Update the form data
     reset({
       ...control._formValues,
       variants: updatedVariants,
@@ -127,53 +123,53 @@ export default function ProductForm() {
   };
 
   const startCropping = (variantIndex, imageIndex) => {
-    setCroppingVariantIndex(variantIndex);
-    setCroppingImageIndex(imageIndex);
+    setCurrentVariantIndex(variantIndex);
+    setCurrentImageIndex(imageIndex);
+    setCurrentImage(variantFields[variantIndex].images[imageIndex].preview);
+    setCropModalOpen(true);
   };
 
-  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
+  const updateAvatar = (croppedImageBase64, croppedImageUrl) => {
+    const updatedVariants = [...variantFields];
+    updatedVariants[currentVariantIndex].images[currentImageIndex] = {
+      file: dataURLtoFile(croppedImageBase64, "cropped_image.jpg"),
+      preview: croppedImageUrl,
+    };
 
-  const handleCropSave = useCallback(async () => {
-    try {
-      const croppedImage = await getCroppedImg(
-        variantFields[croppingVariantIndex].images[croppingImageIndex].preview,
-        croppedAreaPixels
-      );
+    reset({
+      ...control._formValues,
+      variants: updatedVariants,
+    });
 
-      const updatedVariants = [...variantFields];
-      updatedVariants[croppingVariantIndex].images[croppingImageIndex] = {
-        ...updatedVariants[croppingVariantIndex].images[croppingImageIndex],
-        preview: croppedImage,
-      };
+    setCropModalOpen(false);
+    setCurrentImage(null);
+    setCurrentVariantIndex(null);
+    setCurrentImageIndex(null);
+  };
 
-      // Update the form data
-      reset({
-        ...control._formValues,
-        variants: updatedVariants,
-      });
-
-      setCroppingVariantIndex(null);
-      setCroppingImageIndex(null);
-    } catch (e) {
-      console.error(e);
+  const dataURLtoFile = (dataurl, filename) => {
+    let arr = dataurl.split(","),
+      mime = arr[0].match(/:(.*?);/)[1],
+      bstr = atob(arr[1]),
+      n = bstr.length,
+      u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
     }
-  }, [
-    croppingVariantIndex,
-    croppingImageIndex,
-    variantFields,
-    croppedAreaPixels,
-    reset,
-    control._formValues,
-  ]);
+    return new File([u8arr], filename, { type: mime });
+  };
+
+  const onSubmit = (data) => {
+    console.log(data);
+    addProduct(data);
+  };
 
   if (isLoading) {
     return <h3>Loading....</h3>;
   }
 
   if (isError) {
-    return <h3>Error....</h3>;
+    return <h3>Error loading product data. Please try again later.</h3>;
   }
 
   return (
@@ -221,12 +217,11 @@ export default function ProductForm() {
                         <SelectValue placeholder="Select a brand" />
                       </SelectTrigger>
                       <SelectContent>
-                        {brands &&
-                          brands.map((brand) => (
-                            <SelectItem key={brand._id} value={brand.name}>
-                              {brand.name}
-                            </SelectItem>
-                          ))}
+                        {brands.map((brand) => (
+                          <SelectItem key={brand._id} value={brand.name}>
+                            {brand.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   )}
@@ -252,15 +247,11 @@ export default function ProductForm() {
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {categories &&
-                          categories.map((category) => (
-                            <SelectItem
-                              key={category._id}
-                              value={category.title}
-                            >
-                              {category.title}
-                            </SelectItem>
-                          ))}
+                        {categories.map((category) => (
+                          <SelectItem key={category._id} value={category.title}>
+                            {category.title}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   )}
@@ -602,72 +593,13 @@ export default function ProductForm() {
         </CardContent>
       </Card>
 
-      {croppingImageIndex !== null && croppingVariantIndex !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-96">
-            <CardContent className="p-4">
-              <div className="relative h-64 mb-4">
-                <Cropper
-                  image={
-                    variantFields[croppingVariantIndex].images[
-                      croppingImageIndex
-                    ].preview
-                  }
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={4 / 3}
-                  onCropChange={setCrop}
-                  onCropComplete={onCropComplete}
-                  onZoomChange={setZoom}
-                />
-              </div>
-              <div className="flex justify-between">
-                <Button
-                  onClick={() => {
-                    setCroppingVariantIndex(null);
-                    setCroppingImageIndex(null);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCropSave}>Save Crop</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {cropModalOpen && (
+        <CropperModal
+          updateAvatar={updateAvatar}
+          closeModal={() => setCropModalOpen(false)}
+          imageSrc={currentImage}
+        />
       )}
     </div>
   );
-}
-
-// Helper function to crop the image
-function getCroppedImg(imageSrc, pixelCrop) {
-  const image = new Image();
-  image.src = imageSrc;
-  const canvas = document.createElement("canvas");
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
-  const ctx = canvas.getContext("2d");
-
-  ctx.drawImage(
-    image,
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height,
-    0,
-    0,
-    pixelCrop.width,
-    pixelCrop.height
-  );
-
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        reject(new Error("Canvas is empty"));
-        return;
-      }
-      resolve(URL.createObjectURL(blob));
-    }, "image/jpeg");
-  });
 }

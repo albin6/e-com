@@ -9,8 +9,12 @@ const product_schema = new mongoose.Schema({
   },
   brand: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Brand",
+    ref: "brand",
     required: true,
+  },
+  is_active: {
+    type: Boolean,
+    default: true,
   },
   description: {
     type: String,
@@ -18,7 +22,7 @@ const product_schema = new mongoose.Schema({
   },
   category: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Category",
+    ref: "categorie",
     required: true,
   },
   price: {

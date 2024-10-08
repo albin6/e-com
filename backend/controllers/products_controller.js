@@ -2,21 +2,59 @@ import AsyncHandler from "express-async-handler";
 import Category from "../models/categoryModel.js";
 import Brand from "../models/brandModel.js";
 import Product from "../models/productModel.js";
-import path from "path";
-import fs from "fs";
 
 // GET /api/admin/products
 export const get_all_product_details = AsyncHandler(async (req, res) => {
   console.log("hello in get_all_product_details");
-  const products = await Product.find().exec();
-  const brand = await Brand.find({ status: true });
-  const category = await Category.find({ status: true });
 
-  console.log(products);
-  console.log(brand);
-  console.log(category);
+  try {
+    // Fetch all products with populated category and brand details
+    const products = await Product.find({ is_active: true })
+      .populate("category")
+      .populate("brand");
 
-  res.json({ success: true, products, brand, category });
+    // Fetch all categories
+    const categories = await Category.find();
+    if (!categories) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to fetch categories" });
+    }
+
+    // Fetch all brands
+    const brands = await Brand.find();
+    if (!brands) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to fetch brands" });
+    }
+
+    // Check if products exist
+    if (!products.length) {
+      return res.status(200).json({
+        success: true,
+        message: "No products found",
+        products,
+        brands,
+        categories,
+      });
+    }
+
+    console.log(products);
+    console.log(categories);
+    console.log(brands);
+
+    // If everything is successful, return the data
+    res.status(200).json({ success: true, products, brands, categories });
+  } catch (error) {
+    // Catch any other errors and return a 500 status code
+    console.error("Error fetching product details:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching product details",
+      error: error.message,
+    });
+  }
 });
 
 // POST /api/admin/products

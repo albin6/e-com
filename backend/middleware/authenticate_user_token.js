@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 
 export const authenticate_user_token = (req, res, next) => {
+  console.log("user auth middleware");
   try {
     if (
       req.headers["authorization"] &&

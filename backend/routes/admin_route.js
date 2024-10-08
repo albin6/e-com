@@ -22,7 +22,7 @@ import {
 import {
   add_new_product,
   get_all_product_details,
-} from "../controllers/admin_products_controller.js";
+} from "../controllers/products_controller.js";
 import { authenticate_admin_token } from "../middleware/authenticate_admin_token.js";
 import { upload, upload_prodcuct } from "../utils/multer/multer.js";
 const admin_router = express.Router();

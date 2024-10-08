@@ -3,11 +3,12 @@ import { Switch } from "@headlessui/react";
 
 function EditCategoryModal({ category, onUpdate, onClose }) {
   const [title, setTitle] = useState(category?.title);
+  const [description, setDescription] = useState(category?.description);
   const [status, setStatus] = useState(category?.status);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onUpdate({ ...category, title, status });
+    onUpdate({ ...category, title, description, status });
   };
 
   return (
@@ -25,11 +26,21 @@ function EditCategoryModal({ category, onUpdate, onClose }) {
               required
             />
           </div>
+          <div className="mb-4">
+            <label className="block mb-2">Description</label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full p-2 border rounded"
+              required
+            />
+          </div>
           <div className="mb-4 flex items-center justify-between">
             <span>Status</span>
             <Switch
               checked={status}
-              onChange={setStatus}
+              onChange={() => setStatus((prev) => !prev)}
               className={`${
                 status ? "bg-gray-800" : "bg-gray-200"
               } relative inline-flex h-6 w-11 items-center rounded-full`}

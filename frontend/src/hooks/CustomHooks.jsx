@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchCategories } from "../utils/category/categoryCRUD";
 import { getBrandList } from "../utils/brand/brandCRUD";
 import { fetchProductsData } from "../utils/products/adminProductListing";
+import { fetchProductsDetails } from "../utils/products/userProductListing";
 
 export function useUserAuth() {
   const user = useSelector((state) => state.user.userInfo);
@@ -65,5 +66,15 @@ export const useProductsDataMutation = (mutationFunc) => {
     onSuccess: () => {
       queryClient.invalidateQueries("products");
     },
+  });
+};
+// --------------------------------------------------------------
+
+// --------------------------------------------------------------
+// for user products
+export const useUserProductsData = () => {
+  return useQuery({
+    queryKey: ["userProducts"],
+    queryFn: fetchProductsDetails,
   });
 };

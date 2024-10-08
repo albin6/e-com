@@ -38,7 +38,12 @@ function Header() {
   return (
     <header className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div className="text-2xl font-bold">Logo</div>
+        <div
+          className="text-2xl font-bold cursor-pointer"
+          onClick={() => navigate("/")}
+        >
+          Logo
+        </div>
 
         <nav className="hidden md:flex space-x-4">
           <NavLink href="/">Home</NavLink>

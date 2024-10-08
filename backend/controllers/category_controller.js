@@ -15,11 +15,12 @@ export const get_all_categories = AsyncHandler(async (req, res) => {
 // POST /api/admin/categories
 export const add_new_category = AsyncHandler(async (req, res) => {
   console.log(req.body);
-  const { title, status } = req.body;
+  const { title, status, description } = req.body;
 
   const new_category = await Category.create({
     title,
     status,
+    description,
   });
 
   if (new_category) {
@@ -36,6 +37,14 @@ export const update_category = AsyncHandler(async (req, res) => {
   let is_updated = false;
   if (category.title && category.title !== category_data.title) {
     category_data.title = category.title;
+    is_updated = true;
+  }
+
+  if (
+    category.description &&
+    category.description !== category_data.description
+  ) {
+    category_data.description = category.description;
     is_updated = true;
   }
 

@@ -6,11 +6,14 @@ import { submitCategoryForm } from "../../utils/category/categoryCRUD";
 function AddCategoryForm() {
   const mutation = useCategoryListMutation(submitCategoryForm);
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [status, setStatus] = useState(true);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    mutation.mutate({ title, status });
+    mutation.mutate({ title, status, description });
+    setTitle("");
+    setDescription("");
   };
 
   return (
@@ -22,6 +25,14 @@ function AddCategoryForm() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Category Title"
+          className="flex-grow p-2 border rounded"
+          required
+        />
+        <input
+          type="text"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Category Description"
           className="flex-grow p-2 border rounded"
           required
         />

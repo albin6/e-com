@@ -40,14 +40,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(
-  "/uploads",
-  (req, res, next) => {
-    console.log(`Serving static file: ${req.path}`);
-    next();
-  },
-  express.static(path.join(__dirname, "public", "uploads"))
-);
+app.use(express.static(path.join("public")));
 
 app.use("/api/users", user_router);
 app.use("/api/admin", admin_router);

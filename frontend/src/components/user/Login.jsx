@@ -68,7 +68,7 @@ export default function Login() {
         {/* Left Side - Image Section */}
         <div className="md:block my-auto h-[410] relative -top-1">
           <img
-            src="/loginOne.png"
+            src="/Login-Signup/loginOne.png"
             alt="Smartphone illustration"
             className="w-full h-full object-cover rounded-lg"
           />

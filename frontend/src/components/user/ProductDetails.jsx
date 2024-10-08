@@ -1,7 +1,11 @@
 import React from "react";
 import { useState, useEffect } from "react";
+import { Link, useParams } from "react-router-dom";
 
-const ProductDetails = ({ product }) => {
+const ProductDetails = () => {
+  const { id } = useParams();
+  console.log(id, product);
+  const [product, setProduct] = useState(null);
   const [isSoldOut, setIsSoldOut] = useState(false);
   const [inStock, setInStock] = useState(true); // Example states for handling stock status
 
@@ -19,14 +23,14 @@ const ProductDetails = ({ product }) => {
     <div className="container mx-auto py-8">
       {/* Breadcrumbs */}
       <nav className="text-sm mb-4">
-        <a href="/" className="text-gray-500 hover:text-gray-700">
+        <Link to={"/"} className="text-gray-500 hover:text-gray-700">
           Home
-        </a>{" "}
+        </Link>{" "}
         /
-        <a href="/category" className="text-gray-500 hover:text-gray-700">
+        <Link to={"/category"} className="text-gray-500 hover:text-gray-700">
           {" "}
           {product?.category}{" "}
-        </a>{" "}
+        </Link>{" "}
         /<span className="text-gray-700"> {product?.name} </span>
       </nav>
 

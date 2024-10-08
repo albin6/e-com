@@ -1,28 +1,34 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Input } from "../ui/ui-components";
-import { Smartphone, ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import CategoryCard from "./CategoryCard";
 import ProductCard from "./ProductCard";
 import BrandCard from "./BrandCard";
+import { useUserProductsData } from "../../hooks/CustomHooks";
+import { fetchProductsDetails } from "../../utils/products/userProductListing";
 
 const Home = () => {
-  const categories = [
-    { name: "Flagship Phones", icon: Smartphone },
-    { name: "Budget Phones", icon: Smartphone },
-    { name: "5G Phones", icon: Smartphone },
-    { name: "Foldable Phones", icon: Smartphone },
-    { name: "Rugged Phones", icon: Smartphone },
-  ];
+  const navigate = useNavigate();
+  const { data, isError, isLoading } =
+    useUserProductsData(fetchProductsDetails);
+  const [products, setProducts] = useState(null);
+  const [categories, setCategories] = useState(null);
+  const [brands, setBrands] = useState(null);
 
-  const brands = [
-    { name: "Apple", logo: "/placeholder.svg?height=80&width=80" },
-    { name: "Samsung", logo: "/placeholder.svg?height=80&width=80" },
-    { name: "Google", logo: "/placeholder.svg?height=80&width=80" },
-    { name: "OnePlus", logo: "/placeholder.svg?height=80&width=80" },
-    { name: "Xiaomi", logo: "/placeholder.svg?height=80&width=80" },
-    { name: "Sony", logo: "/placeholder.svg?height=80&width=80" },
-  ];
+  useEffect(() => {
+    setProducts(data?.products);
+    setCategories(data?.categories);
+    setBrands(data?.brands);
+  }, [data]);
+
+  if (isLoading) {
+    return <h2>Loading...</h2>;
+  }
+
+  if (isError) {
+    return <h2>Error...</h2>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-white">
@@ -50,47 +56,7 @@ const Home = () => {
       <section className="py-16 px-4 md:px-8">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-bold">Shop by Category</h2>
-          <Link href="/products?category=all">
-            <Button
-              variant="outline"
-              className="bg-gray-900 hover:bg-gray-600 text-white"
-            >
-              View All
-            </Button>
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
-          {categories.map((category) => (
-            <CategoryCard key={category.name} category={category} />
-          ))}
-        </div>
-      </section>
-
-      {/* Featured Products */}
-      <section className="py-16 px-4 md:px-8 bg-gray-100">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold">Featured Smartphones</h2>
-          <Link href="/products?featured=true">
-            <Button
-              variant="outline"
-              className="bg-gray-900 hover:bg-gray-600 text-white"
-            >
-              View All
-            </Button>
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-          {[1, 2, 3, 4, 5].map((product) => (
-            <ProductCard key={product} product={product} />
-          ))}
-        </div>
-      </section>
-
-      {/* Shop by Brand */}
-      <section className="py-16 px-4 md:px-8">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold">Shop by Brand</h2>
-          <Link href="/products?brand=all">
+          <Link to="/products/list">
             <Button
               variant="outline"
               className="bg-gray-900 hover:bg-gray-600 text-white"
@@ -100,9 +66,73 @@ const Home = () => {
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-6 gap-8">
-          {brands.map((brand) => (
-            <BrandCard key={brand.name} brand={brand} />
-          ))}
+          {categories &&
+            categories.map((category) => (
+              <CategoryCard key={category._id} category={category} />
+            ))}
+        </div>
+      </section>
+
+      {/* Flagship Phones */}
+      <section className="py-16 px-4 md:px-8 bg-gray-100">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-bold">Flagship Phones</h2>
+          <Link to="/products/list">
+            <Button
+              variant="outline"
+              className="bg-gray-900 hover:bg-gray-600 text-white"
+            >
+              View All
+            </Button>
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+          {products &&
+            products.map((product) => (
+              <ProductCard key={product._id} product={product} />
+            ))}
+        </div>
+      </section>
+
+      {/* Featured Phones */}
+      <section className="py-16 px-4 md:px-8 bg-gray-100">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-bold">Featured Smartphones</h2>
+          <Link to="/products/list">
+            <Button
+              variant="outline"
+              className="bg-gray-900 hover:bg-gray-600 text-white"
+            >
+              View All
+            </Button>
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+          {products &&
+            products.map((product) =>
+              product?.isFeatured ? (
+                <ProductCard key={product._id} product={product} />
+              ) : null
+            )}
+        </div>
+      </section>
+
+      {/* Shop by Brand */}
+      <section className="py-16 px-4 md:px-8">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-bold">Shop by Brand</h2>
+          <Link to="/products/list">
+            <Button
+              variant="outline"
+              className="bg-gray-900 hover:bg-gray-600 text-white"
+            >
+              View All
+            </Button>
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-8">
+          {brands &&
+            brands.map((brand) => <BrandCard key={brand._id} brand={brand} />)}
         </div>
       </section>
 

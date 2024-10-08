@@ -1,70 +1,59 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
-
-// Mock initial products
-const initialProducts = [
-  {
-    id: 1,
-    name: "Smartphone X",
-    category: "Electronics",
-    price: 599.99,
-    stock: 50,
-    image: "/placeholder.svg",
-  },
-  {
-    id: 2,
-    name: "Designer T-Shirt",
-    category: "Clothing",
-    price: 29.99,
-    stock: 100,
-    image: "/placeholder.svg",
-  },
-  {
-    id: 3,
-    name: "Wireless Headphones",
-    category: "Electronics",
-    price: 149.99,
-    stock: 30,
-    image: "/placeholder.svg",
-  },
-];
-
-const categories = ["All", "Electronics", "Clothing"];
+import { useProductsData } from "../../hooks/CustomHooks";
+import { fetchProductsData } from "../../utils/products/adminProductListing";
 
 export default function ProductListing() {
+  const { data, isError, isLoading } = useProductsData(fetchProductsData);
   const navigate = useNavigate();
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [filterCategory, setFilterCategory] = useState("All");
   const [sortBy, setSortBy] = useState("name");
 
+  useEffect(() => {
+    if (data) {
+      setProducts(data.products || []);
+      setCategories(data.categories || []);
+      setBrands(data.brands || []);
+    }
+  }, [data]);
+
   const handleAddProduct = () => {
-    // Implement add product functionality
-    console.log("Add product clicked");
     navigate("/admin/products/add-product");
   };
 
   const handleEditProduct = (product) => {
-    // Implement edit product functionality
-    console.log("Edit product:", product);
-    navigate("/admin/products/edit-product");
+    navigate(`/admin/products/edit-product/${product._id}`);
   };
 
   const handleDeleteProduct = (productId) => {
-    setProducts(products.filter((product) => product.id !== productId));
+    // Implement delete functionality here
+    console.log("Delete product:", productId);
   };
 
   const filteredProducts = products
     .filter(
       (product) =>
-        filterCategory === "All" || product.category === filterCategory
+        filterCategory === "All" || product.category?.title === filterCategory
     )
     .sort((a, b) => {
       if (sortBy === "name") return a.name.localeCompare(b.name);
       if (sortBy === "price") return a.price - b.price;
-      if (sortBy === "stock") return a.stock - b.stock;
+      if (sortBy === "stock")
+        return (a.variants[0]?.stock || 0) - (b.variants[0]?.stock || 0);
       return 0;
     });
+
+  if (isLoading) {
+    return <h2>Loading...</h2>;
+  }
+
+  if (isError) {
+    return <h2>Error loading products. Please try again later.</h2>;
+  }
 
   return (
     <div className="container mx-auto p-4">
@@ -90,9 +79,10 @@ export default function ProductListing() {
             onChange={(e) => setFilterCategory(e.target.value)}
             className="border rounded-md p-2"
           >
+            <option value="All">All Categories</option>
             {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
+              <option key={category._id} value={category.title}>
+                {category.title}
               </option>
             ))}
           </select>
@@ -121,6 +111,7 @@ export default function ProductListing() {
               <th className="py-2 px-4 border-b text-left">Image</th>
               <th className="py-2 px-4 border-b text-left">Name</th>
               <th className="py-2 px-4 border-b text-left">Category</th>
+              <th className="py-2 px-4 border-b text-left">Brand</th>
               <th className="py-2 px-4 border-b text-left">Price</th>
               <th className="py-2 px-4 border-b text-left">Stock</th>
               <th className="py-2 px-4 border-b text-left">Actions</th>
@@ -128,18 +119,21 @@ export default function ProductListing() {
           </thead>
           <tbody>
             {filteredProducts.map((product) => (
-              <tr key={product.id} className="border-b hover:bg-gray-50">
+              <tr key={product._id} className="border-b hover:bg-gray-50">
                 <td className="py-2 px-4">
                   <img
-                    src={product.image}
+                    src={`${import.meta.env.VITE_API_BASE_URL}/products/${
+                      product.variants[0]?.images[0]
+                    }`}
                     alt={product.name}
                     className="w-16 h-16 object-cover rounded"
                   />
                 </td>
                 <td className="py-2 px-4">{product.name}</td>
-                <td className="py-2 px-4">{product.category}</td>
+                <td className="py-2 px-4">{product.category?.title}</td>
+                <td className="py-2 px-4">{product.brand?.name}</td>
                 <td className="py-2 px-4">${product.price.toFixed(2)}</td>
-                <td className="py-2 px-4">{product.stock}</td>
+                <td className="py-2 px-4">{product.variants[0]?.stock || 0}</td>
                 <td className="py-2 px-4">
                   <button
                     onClick={() => handleEditProduct(product)}
@@ -148,7 +142,7 @@ export default function ProductListing() {
                     <PencilIcon className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => handleDeleteProduct(product.id)}
+                    onClick={() => handleDeleteProduct(product._id)}
                     className="text-red-500 hover:text-red-700"
                   >
                     <TrashIcon className="w-5 h-5" />

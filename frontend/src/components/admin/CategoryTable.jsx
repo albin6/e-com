@@ -55,6 +55,7 @@ function CategoryTable() {
           <tr className="bg-gray-200">
             <th className="border p-2 text-left">ID</th>
             <th className="border p-2 text-left">Title</th>
+            <th className="border p-2 text-left">Description</th>
             <th className="border p-2 text-center">Status</th>
             <th className="border p-2 text-center">Actions</th>
           </tr>
@@ -64,6 +65,7 @@ function CategoryTable() {
             <tr key={category._id} className="border-b">
               <td className="border p-2">{category._id}</td>
               <td className="border p-2">{category.title}</td>
+              <td className="border p-2">{category.description}</td>
               <td className="border p-2 text-center">
                 <Switch
                   checked={category.status}

@@ -18,6 +18,7 @@ import NewPassword from "./components/user/NewPassword";
 import ForgotPassword from "./components/user/ForgotPassword";
 import ProductDetailsPage from "./pages/user/ProductDetailsPage";
 import RequireAuthentication from "./private/user/RequireAuthentication";
+import ProductListingPage from "./pages/user/ProductListingPage";
 
 function AppLayout() {
   const admin = useSelector((state) => state.admin.adminInfo);
@@ -44,10 +45,18 @@ function AppLayout() {
         <Route path="/users/forgot-password" element={<ForgotPassword />} />
         <Route path="/users/reset-password/:id" element={<NewPassword />} />
         <Route
-          path="/products"
+          path="/products/:id"
           element={
             <RequireAuthentication>
               <ProductDetailsPage />
+            </RequireAuthentication>
+          }
+        />
+        <Route
+          path="/products/list"
+          element={
+            <RequireAuthentication>
+              <ProductListingPage />
             </RequireAuthentication>
           }
         />
