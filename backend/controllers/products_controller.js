@@ -4,7 +4,7 @@ import Brand from "../models/brandModel.js";
 import Product from "../models/productModel.js";
 
 // GET /api/admin/products
-export const get_all_product_details = AsyncHandler(async (req, res) => {
+export const get_all_products_details = AsyncHandler(async (req, res) => {
   console.log("hello in get_all_product_details");
 
   try {
@@ -57,6 +57,19 @@ export const get_all_product_details = AsyncHandler(async (req, res) => {
   }
 });
 
+// GET /api/users/get_product
+export const get_product = AsyncHandler(async (req, res) => {
+  const productId = req.params.productId;
+
+  const product = await Product.findOne({ _id: productId })
+    .populate("category")
+    .populate("brand");
+
+  console.log("in get product =>>>>", product);
+
+  res.json({ product });
+});
+
 // POST /api/admin/products
 export const add_new_product = AsyncHandler(async (req, res) => {
   const {
@@ -73,16 +86,26 @@ export const add_new_product = AsyncHandler(async (req, res) => {
     variants,
   } = req.body;
 
-  // Handling file uploads for product images
-  const images = req.files.map((file) => file.filename); // Assuming the images are sent as 'files' in the request
+  // Create an object to map images to their respective variants
+  const imagesByVariant = {};
 
+  req.files.forEach((file) => {
+    const variantIndex = variants.findIndex(
+      (variant) => variant._id === file.variantId
+    );
+    if (variantIndex !== -1) {
+      if (!imagesByVariant[variantIndex]) {
+        imagesByVariant[variantIndex] = [];
+      }
+      imagesByVariant[variantIndex].push(file.filename);
+    }
+  });
+  // Fetch brand and category information from the database
   const brand_data = await Brand.findOne({ name: brand });
   const category_data = await Category.findOne({ title: category });
 
-  console.log("category and brand ===>>>", brand_data, category_data);
-
   try {
-    // Create a new product instance
+    // Create a new product instance, mapping images to their respective variants
     const newProduct = new Product({
       name,
       brand: brand_data._id,
@@ -91,21 +114,17 @@ export const add_new_product = AsyncHandler(async (req, res) => {
       price,
       discount,
       specifications,
-      tags: tags.split(",").map((tag) => tag.trim()), // Assuming tags are passed as a comma-separated string
+      tags: tags.split(",").map((tag) => tag.trim()),
       releaseDate,
       isFeatured,
-      variants: variants.map((variant) => ({
+      variants: variants.map((variant, index) => ({
         ...variant,
-        images, // Attach images to each variant (you can adjust this if needed)
+        images: imagesByVariant[index] || [], // Ensure images are only attached to their respective variant
       })),
     });
 
-    console.log("hereeeeeeeeeeeeeeee", newProduct);
-
     // Save the new product to the database
     const savedProduct = await newProduct.save();
-
-    console.log(savedProduct);
 
     // Send a success response
     res.status(201).json({

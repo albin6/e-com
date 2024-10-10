@@ -21,7 +21,7 @@ import {
 } from "../controllers/brand_controller.js";
 import {
   add_new_product,
-  get_all_product_details,
+  get_all_products_details,
 } from "../controllers/products_controller.js";
 import { authenticate_admin_token } from "../middleware/authenticate_admin_token.js";
 import { upload, upload_prodcuct } from "../utils/multer/multer.js";
@@ -58,7 +58,7 @@ admin_router
 
 admin_router
   .route("/products")
-  .get(authenticate_admin_token, get_all_product_details)
+  .get(authenticate_admin_token, get_all_products_details)
   .post(authenticate_admin_token, upload_prodcuct, add_new_product);
 
 // -------------------------------------------------------

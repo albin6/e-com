@@ -237,7 +237,7 @@ const ProductListing = () => {
                   onClick={() => paginate(index + 1)}
                   className={`px-4 py-2 border border-gray-300 text-sm font-medium ${
                     currentPage === index + 1
-                      ? "bg-blue-50 border-blue-500 text-blue-600"
+                      ? "bg-gray-50 border-gray-500 text-gray-600"
                       : "bg-white text-gray-500 hover:bg-gray-50"
                   }`}
                 >

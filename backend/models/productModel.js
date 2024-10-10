@@ -124,6 +124,23 @@ const product_schema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  reviews: [
+    {
+      name: {
+        type: String,
+      },
+      rating: {
+        type: Number,
+      },
+      comment: {
+        type: String,
+      },
+      created_at: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
 });
 
 product_schema.plugin(paginate);

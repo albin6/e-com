@@ -78,3 +78,14 @@ export const useUserProductsData = () => {
     queryFn: fetchProductsDetails,
   });
 };
+
+// --------------------------------------------------------------
+
+// --------------------------------------------------------------
+// for user product details
+export const useUserProduct = (queryFunc) => {
+  return useQuery({
+    queryKey: ["singleProduct"],
+    queryFn: queryFunc,
+  });
+};

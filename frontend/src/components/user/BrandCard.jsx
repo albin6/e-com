@@ -7,7 +7,7 @@ const BrandCard = ({ brand }) => (
       alt={brand.name}
       className="w-20 h-20 mx-auto mb-4 rounded-full"
     />
-    <h3 className="font-semibold">{brand.name}</h3>
+    <h3 className="font-semibold text-gray-800">{brand.name}</h3>
   </div>
 );
 
