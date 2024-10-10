@@ -1,9 +1,74 @@
 import { Link } from "react-router-dom";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useId } from "react";
 import { ChevronDown } from "lucide-react";
 
 const SelectContext = createContext(null);
+
+const RadioGroupContext = createContext(null);
+
+export function RadioGroup({
+  defaultValue,
+  onValueChange,
+  className,
+  children,
+}) {
+  const [value, setValue] = React.useState(defaultValue);
+
+  const handleValueChange = (newValue) => {
+    setValue(newValue);
+    onValueChange?.(newValue);
+  };
+
+  return (
+    <RadioGroupContext.Provider
+      value={{ value, onValueChange: handleValueChange }}
+    >
+      <div className={className} role="radiogroup">
+        {children}
+      </div>
+    </RadioGroupContext.Provider>
+  );
+}
+
+export function RadioGroupItem({ value, id, className, children }) {
+  const context = useContext(RadioGroupContext);
+  const generatedId = useId();
+  const radioId = id || generatedId;
+
+  if (!context) {
+    throw new Error("RadioGroupItem must be used within a RadioGroup");
+  }
+
+  const isChecked = context.value === value;
+
+  const handleChange = () => {
+    context.onValueChange(value);
+  };
+
+  return (
+    <div className={className}>
+      <input
+        type="radio"
+        id={radioId}
+        className="sr-only peer"
+        checked={isChecked}
+        onChange={handleChange}
+        value={value}
+      />
+      <label
+        htmlFor={radioId}
+        className={`inline-flex items-center justify-center rounded-full px-3 py-2 text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
+          isChecked
+            ? "bg-primary text-primary-foreground hover:bg-primary/90"
+            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+        } cursor-pointer`}
+      >
+        {children}
+      </label>
+    </div>
+  );
+}
 
 export function Select({ children, onValueChange, defaultValue = "" }) {
   const [open, setOpen] = useState(false);

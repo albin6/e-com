@@ -1,208 +1,409 @@
-import React from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import {
   Heart,
   Share2,
-  Play,
-  ChevronDown,
   ChevronUp,
   MapPin,
+  Star,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import {
+  Checkbox,
+  Label,
+  Card,
+  CardContent,
+  Button,
+  RadioGroup,
+  RadioGroupItem,
+} from "../ui/ui-components";
+import { useParams } from "react-router-dom";
 import { useUserProduct } from "../../hooks/CustomHooks";
 import { fetchProduct } from "../../utils/products/userProductListing";
 
 function ProductDetails() {
   const { id } = useParams();
-  const { data, isError, isLoading } = useUserProduct(fetchProduct(id));
-  console.log(data);
+  const { data: product, isLoading, error } = useUserProduct(fetchProduct(id));
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  if (isLoading) {
-    return <h2>Loading...</h2>;
-  }
+  console.log(product);
 
-  if (isError) {
-    return <h2>Error...</h2>;
-  }
+  useEffect(() => {
+    if (product && product.variants.length > 0) {
+      setSelectedVariant(product.variants[0]);
+    }
+  }, [product]);
+
+  if (isLoading)
+    return (
+      <div className="flex items-center justify-center h-screen">
+        Loading...
+      </div>
+    );
+  if (error)
+    return (
+      <div className="flex items-center justify-center h-screen text-red-500">
+        Error: {error.message}
+      </div>
+    );
+  if (!product)
+    return (
+      <div className="flex items-center justify-center h-screen">
+        No product found
+      </div>
+    );
+
+  const handleVariantChange = (sku) => {
+    const newVariant = product.variants.find((v) => v.sku === sku);
+    if (newVariant) {
+      setSelectedVariant(newVariant);
+      console.log(newVariant);
+      setCurrentImageIndex(0);
+    }
+  };
+
+  const nextImage = () => {
+    if (selectedVariant) {
+      setCurrentImageIndex(
+        (prevIndex) => (prevIndex + 1) % selectedVariant.images.length
+      );
+    }
+  };
+
+  const prevImage = () => {
+    if (selectedVariant) {
+      setCurrentImageIndex(
+        (prevIndex) =>
+          (prevIndex - 1 + selectedVariant.images.length) %
+          selectedVariant.images.length
+      );
+    }
+  };
+
+  const averageRating =
+    product.reviews.reduce((acc, review) => acc + review.rating, 0) /
+    product.reviews.length;
 
   return (
-    <div className="min-h-screen bg-white text-gray-800 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 text-gray-900 p-4 md:p-8">
       <nav className="mb-6">
-        <ul className="flex items-center space-x-2 text-sm text-gray-600">
-          <li>Phones & Wearables</li>
-          <ChevronUp className="w-4 h-4 rotate-90" />
-          <li>Mobile Phones</li>
-          <ChevronUp className="w-4 h-4 rotate-90" />
-          <li>Android Phones</li>
+        <ul className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+          <li>{product.category.name}</li>
+          <ChevronRight className="w-4 h-4" />
+          <li>{product.brand.name}</li>
         </ul>
       </nav>
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="lg:w-1/2">
-          <div className="relative aspect-square mb-4">
-            <img
-              src={`${import.meta.env.VITE_API_BASE_URL}/products/${
-                data.variants[0].images[0]
-              }`}
-              alt="SAMSUNG Galaxy S24 Ultra 5G"
-              className="w-full h-full object-cover rounded-lg border border-gray-200"
-            />
-          </div>
-          <div className="flex space-x-2 mb-4 overflow-x-auto">
-            {data.variants[0].images.map((path) => (
-              <div
-                key={path}
-                className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200"
-              >
+      <div className="grid gap-8 lg:grid-cols-2">
+        <div className="space-y-6">
+          {selectedVariant && (
+            <Card className="overflow-hidden">
+              <CardContent className="p-0 relative aspect-square">
                 <img
-                  src={`${import.meta.env.VITE_API_BASE_URL}/products/${path}`}
-                  width={80}
-                  height={80}
-                  className="rounded-md"
+                  src={`${import.meta.env.VITE_API_BASE_URL}/products/${
+                    selectedVariant.images[currentImageIndex]
+                  }`}
+                  alt={`${product.name} - ${selectedVariant.color}`}
+                  className="w-full h-full object-cover"
                 />
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center space-x-4">
-            <input
-              type="checkbox"
-              id="compare"
-              className="rounded bg-white border-gray-300"
-            />
-            <label htmlFor="compare" className="text-sm">
-              Compare
-            </label>
-            <button className="text-sm bg-gray-100 px-4 py-2 rounded-full flex items-center space-x-2 text-gray-800 border border-gray-300">
-              <span className="material-icons text-lg">store</span>
-              <span>Connect to Store</span>
-            </button>
-          </div>
+                <div className="absolute inset-0 flex items-center justify-between p-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={prevImage}
+                    className="rounded-full bg-white/80 hover:bg-white"
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={nextImage}
+                    className="rounded-full bg-white/80 hover:bg-white"
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {selectedVariant && (
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {selectedVariant.images.map((image, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  className="w-20 h-20 p-0 rounded-lg overflow-hidden"
+                  onClick={() => setCurrentImageIndex(index)}
+                >
+                  <img
+                    src={`${
+                      import.meta.env.VITE_API_BASE_URL
+                    }/products/${image}`}
+                    alt={`Thumbnail ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="lg:w-1/2">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">
-              {data.name} ({data.variants[0].ram} RAM,{" "}
-              {data.variants[0].storage}, {data.variants[0].color})
-            </h1>
-            <div className="flex space-x-4">
-              <Heart className="w-6 h-6 text-gray-600" />
-              <Share2 className="w-6 h-6 text-gray-600" />
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
+            {selectedVariant && (
+              <p className="text-lg text-gray-600">
+                {selectedVariant.ram} RAM, {selectedVariant.storage},{" "}
+                {selectedVariant.color}
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold text-gray-900">
+                {averageRating.toFixed(1)}
+              </span>
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-5 h-5 ${
+                      i < Math.round(averageRating)
+                        ? "text-yellow-400 fill-current"
+                        : "text-gray-300"
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="text-sm text-gray-600">
+                ({product.reviews.length} Ratings)
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="icon">
+                <Heart className="h-6 w-6" />
+              </Button>
+              <Button variant="ghost" size="icon">
+                <Share2 className="h-6 w-6" />
+              </Button>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 mb-4">
-            <span className="text-gray-700">2.3★</span>
-            <span className="text-sm text-gray-700">(3 Ratings)</span>
-          </div>
-
-          <div className="mb-6">
+          <div className="bg-white p-4 rounded-lg shadow-sm">
             <span className="text-3xl font-bold text-gray-900">
-              ₹{data.price}.00
+              ₹{product.price.toLocaleString()}.00
             </span>
             <span className="text-sm text-gray-600 ml-2">
               (Incl. all Taxes)
             </span>
-            <div className="text-sm text-gray-600">
-              <span className="line-through">MRP: ₹134,999.00</span>
-              <span className="text-gray-700 ml-2">
-                (Save ₹13,000, {data.discount}% off)
+            <div className="text-sm text-gray-600 mt-1">
+              <span className="line-through">
+                MRP: ₹
+                {(product.price / (1 - product.discount / 100)).toFixed(2)}
+              </span>
+              <span className="text-green-600 ml-2">
+                (Save ₹
+                {(
+                  product.price / (1 - product.discount / 100) -
+                  product.price
+                ).toFixed(2)}
+                , {product.discount}% off)
               </span>
             </div>
           </div>
 
-          <div className="bg-gray-100 rounded-lg p-4 mb-6 border border-gray-200">
-            <div className="flex items-center space-x-2 mb-2">
-              <MapPin className="w-5 h-5 text-gray-700" />
-              <span className="font-bold text-gray-900">
-                Delivery at: Mumbai, 400049.
-              </span>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <MapPin className="h-5 w-5 text-gray-600" />
+                <span className="font-semibold">
+                  Delivery at: Mumbai, 400049
+                </span>
+              </div>
+              <p className="text-sm text-gray-600">
+                Will be delivered by{" "}
+                {new Date(
+                  Date.now() + 7 * 24 * 60 * 60 * 1000
+                ).toLocaleDateString()}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <h2 className="font-bold text-lg mb-3">Key Features</h2>
+              <ul className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                <li>
+                  <span className="font-semibold">Display:</span>{" "}
+                  {product.specifications.display.size},{" "}
+                  {product.specifications.display.resolution},{" "}
+                  {product.specifications.display.type}
+                </li>
+                {selectedVariant && (
+                  <li>
+                    <span className="font-semibold">Memory:</span>{" "}
+                    {selectedVariant.ram} RAM, {selectedVariant.storage} ROM
+                  </li>
+                )}
+                <li>
+                  <span className="font-semibold">Processor:</span>{" "}
+                  {product.specifications.processor}
+                </li>
+                <li>
+                  <span className="font-semibold">Camera:</span>{" "}
+                  {product.specifications.camera.rear} Rear,{" "}
+                  {product.specifications.camera.front} Front
+                </li>
+                <li>
+                  <span className="font-semibold">Battery:</span>{" "}
+                  {product.specifications.battery}
+                </li>
+                <li>
+                  <span className="font-semibold">OS:</span>{" "}
+                  {product.specifications.os}
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-4">
+            <div>
+              <h2 className="font-bold text-lg mb-2">Color</h2>
+              <RadioGroup
+                defaultValue={selectedVariant?.sku}
+                onValueChange={handleVariantChange}
+                className="flex flex-wrap gap-2"
+              >
+                {product.variants.map((variant) => (
+                  <div key={variant.sku}>
+                    <RadioGroupItem
+                      value={variant.sku}
+                      id={`color-${variant.sku}`}
+                      className="peer sr-only"
+                    />
+                    <Label
+                      htmlFor={`color-${variant.sku}`}
+                      className="flex items-center justify-center px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-blue-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
+                    >
+                      {variant.color}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
             </div>
-            <p className="text-sm text-gray-600">
-              Will be delivered by 11 October 2024.
-            </p>
-          </div>
 
-          <div className="bg-gray-100 rounded-lg p-4 mb-6 border border-gray-200">
-            <h2 className="font-bold mb-2 text-gray-900">Key Features</h2>
-            <ul className="list-disc list-inside text-sm space-y-2 text-gray-700">
-              <li>
-                Display: {data.specifications.display.size},{" "}
-                {data.specifications.display.resolution},{" "}
-                {data.specifications.display.type}
-              </li>
-              <li>
-                Memory: {data.variants[0].ram} RAM, {data.variants[0].storage}{" "}
-                ROM
-              </li>
-              <li>Processor: {data.specifications.processor}</li>
-              <li>
-                Camera: {data.specifications.camera.rear} Rear &{" "}
-                {data.specifications.camera.front} Front Camera
-              </li>
-              <li>
-                Battery: {data.specifications.battery} mAh with USB Type-C
-                Charging
-              </li>
-              <li>Operating System: {data.specifications.os}</li>
-            </ul>
-          </div>
+            <div>
+              <h2 className="font-bold text-lg mb-2">RAM</h2>
+              <RadioGroup
+                defaultValue={selectedVariant?.ram}
+                onValueChange={(value) =>
+                  handleVariantChange(
+                    product.variants.find((v) => v.ram === value)?.sku || ""
+                  )
+                }
+                className="flex flex-wrap gap-2"
+              >
+                {Array.from(new Set(product.variants.map((v) => v.ram))).map(
+                  (ram) => (
+                    <div key={ram}>
+                      <RadioGroupItem
+                        value={ram}
+                        id={`ram-${ram}`}
+                        className="peer sr-only"
+                      />
+                      <Label
+                        htmlFor={`ram-${ram}`}
+                        className="flex items-center justify-center px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-blue-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
+                      >
+                        {ram}
+                      </Label>
+                    </div>
+                  )
+                )}
+              </RadioGroup>
+            </div>
 
-          <div className="mb-6">
-            <h2 className="font-bold mb-2 text-gray-900">Brand Color</h2>
-            <div className="flex flex-wrap gap-2">
-              {data.variants.map((variant) => (
-                <button
-                  key={variant.sku}
-                  className={`px-4 py-2 rounded-full text-sm ${"bg-gray-500 text-white"}`}
-                >
-                  {variant.color}
-                </button>
-              ))}
+            <div>
+              <h2 className="font-bold text-lg mb-2">Internal Storage</h2>
+              <RadioGroup
+                defaultValue={selectedVariant?.storage}
+                onValueChange={(value) =>
+                  handleVariantChange(
+                    product.variants.find((v) => v.storage === value)?.sku || ""
+                  )
+                }
+                className="flex flex-wrap gap-2"
+              >
+                {Array.from(
+                  new Set(product.variants.map((v) => v.storage))
+                ).map((storage) => (
+                  <div key={storage}>
+                    <RadioGroupItem
+                      value={storage}
+                      id={`storage-${storage}`}
+                      className="peer sr-only"
+                    />
+                    <Label
+                      htmlFor={`storage-${storage}`}
+                      className="flex items-center justify-center px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-blue-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
+                    >
+                      {storage}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
             </div>
           </div>
 
-          <div className="mb-6">
-            <h2 className="font-bold mb-2 text-gray-900">RAM</h2>
-            <div className="flex flex-wrap gap-2">
-              {data.variants.map((variant) => (
-                <button
-                  key={variant.sku}
-                  className="px-4 py-2 rounded-full text-sm bg-gray-500 text-white"
-                >
-                  {variant.ram}
-                </button>
-              ))}
-            </div>
+          <div>
+            <h2 className="font-bold text-lg mb-2">Description</h2>
+            <p className="text-sm text-gray-600">{product.description}</p>
           </div>
 
-          <div className="mb-6">
-            <h2 className="font-bold mb-2 text-gray-900">Internal Storage</h2>
-            <div className="flex flex-wrap gap-2">
-              {data.variants.map((variant) => (
-                <button
-                  key={variant.sku}
-                  className="px-4 py-2 rounded-full text-sm bg-gray-500 text-white"
-                >
-                  {variant.storage}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <h2 className="font-bold mb-2 text-gray-900">Description</h2>
-            <div className="flex flex-wrap gap-2">
-              <p>{data.description}</p>
-            </div>
-          </div>
-
-          <div className="flex space-x-4">
-            <button className="flex-1 bg-gray-800 text-white font-bold py-3 rounded-lg hover:bg-gray-600 transition-colors">
+          <div className="flex gap-4">
+            <Button className="flex-1 bg-gray-600 hover:bg-gray-700 text-white">
               Buy Now
-            </button>
-            <button className="flex-1 bg-white text-gray-500 font-bold py-3 rounded-lg border border-gray-500 hover:bg-blue-50 transition-colors">
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 border-gray-600 text-gray-600 hover:bg-blue-50"
+            >
               Add to Cart
-            </button>
+            </Button>
+          </div>
+
+          <div>
+            <h2 className="font-bold text-lg mb-4">Customer Reviews</h2>
+            <div className="space-y-4">
+              {product.reviews.map((review, index) => (
+                <Card key={index}>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-semibold">{review.name}</span>
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${
+                              i < review.rating
+                                ? "text-yellow-400 fill-current"
+                                : "text-gray-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600">{review.comment}</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {new Date(review.created_at).toLocaleDateString()}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </div>

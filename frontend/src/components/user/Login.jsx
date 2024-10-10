@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { axiosInstance } from "../../config/axiosInstance";
 import { useDispatch } from "react-redux";
 import { setUserDetails } from "../../redux/Slices/userSlice";
+import GoogleAuth from "../ui/google/GoogleAuth";
 
 const validationSchema = Yup.object({
   email: Yup.string()
@@ -158,6 +159,14 @@ export default function Login() {
                   >
                     Sign in
                   </Button>
+                </div>
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                  >
+                    <GoogleAuth setError={setError} />
+                  </button>
                 </div>
               </Form>
             )}

@@ -132,7 +132,7 @@ export default function ProductListing() {
                 <td className="py-2 px-4">{product.name}</td>
                 <td className="py-2 px-4">{product.category?.title}</td>
                 <td className="py-2 px-4">{product.brand?.name}</td>
-                <td className="py-2 px-4">${product.price.toFixed(2)}</td>
+                <td className="py-2 px-4">₹{product.price.toFixed(2)}</td>
                 <td className="py-2 px-4">{product.variants[0]?.stock || 0}</td>
                 <td className="py-2 px-4">
                   <button

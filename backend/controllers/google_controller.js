@@ -67,32 +67,39 @@ export const google_authentication = AsyncHandler(async (req, res) => {
       },
     });
   } else {
-    const user_data = {
-      _id: user._id,
-      email: user.email,
-    };
-    const access_token = generateAccessToken(user_data);
-    const refresh_token = generateRefreshToken(user_data);
-
-    const new_refresh_token = new RefreshToken({
-      token: refresh_token,
-      user: user._id,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    });
-
-    await new_refresh_token.save();
-
-    set_token("user_refresh_token", refresh_token, 24 * 60 * 60 * 1000, res);
-
-    res.json({
-      success: true,
-      access_token,
-      user: {
-        id: user._id,
-        name: user.first_name,
-        name: user.last_name,
+    if (!user.is_blocked) {
+      const user_data = {
+        _id: user._id,
         email: user.email,
-      },
-    });
+      };
+      const access_token = generateAccessToken(user_data);
+      const refresh_token = generateRefreshToken(user_data);
+
+      const new_refresh_token = new RefreshToken({
+        token: refresh_token,
+        user: user._id,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+
+      await new_refresh_token.save();
+
+      set_token("user_refresh_token", refresh_token, 24 * 60 * 60 * 1000, res);
+
+      res.json({
+        success: true,
+        access_token,
+        user: {
+          id: user._id,
+          name: user.first_name,
+          name: user.last_name,
+          email: user.email,
+        },
+      });
+    } else {
+      res.status(403).json({
+        success: false,
+        message: "You are blocked. Not able to login",
+      });
+    }
   }
 });

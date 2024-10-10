@@ -58,8 +58,12 @@ export default function Signup() {
         setIsOTPModalOpen(true);
         setOtpMessage("OTP sent successfully. Please check your email.");
         setOtpErrMessage("");
+        setError("");
       }
     } catch (error) {
+      if (error?.response) {
+        setError(error.response?.data?.message);
+      }
       console.log(error);
     }
   };
@@ -108,26 +112,29 @@ export default function Signup() {
   };
 
   const handleFormSubmit = async () => {
-    const response = await axiosInstance.post("/api/users/signup", {
-      first_name: form_data.firstName,
-      last_name: form_data.lastName,
-      email: form_data.email,
-      phone_number: form_data.phoneNumber,
-      password: form_data.password,
-    });
-    console.log(response.data);
-
-    if (response?.data?.success) {
-      localStorage.setItem(
-        "access_token",
-        JSON.stringify(response?.data?.access_token)
-      );
-      dispatch(setUserDetails(response.data?.new_user));
-      navigate("/");
-    }
-
     try {
+      setError("");
+      const response = await axiosInstance.post("/api/users/signup", {
+        first_name: form_data.firstName,
+        last_name: form_data.lastName,
+        email: form_data.email,
+        phone_number: form_data.phoneNumber,
+        password: form_data.password,
+      });
+      console.log(response.data);
+
+      if (response?.data?.success) {
+        localStorage.setItem(
+          "access_token",
+          JSON.stringify(response?.data?.access_token)
+        );
+        dispatch(setUserDetails(response.data?.new_user));
+        navigate("/");
+      }
     } catch (error) {
+      if (error?.response) {
+        setError(error.response?.data?.message);
+      }
       console.log(error);
     }
     // Add your signup logic here
@@ -144,7 +151,7 @@ export default function Signup() {
           />
         </div>
         <div>
-          <div className="flex flex-col justify-center mb-5">
+          <div className="flex flex-col justify-center mb-1">
             <CreateUserIcon />
             <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
               Create an account
@@ -154,7 +161,7 @@ export default function Signup() {
             </p>
           </div>
           {error && (
-            <p className="mt-2 text-center text-sm text-red-700">{error}</p>
+            <p className="mb-2 text-center text-base text-red-700">{error}</p>
           )}
           <Formik
             initialValues={{
