@@ -233,6 +233,7 @@ export const logout = AsyncHandler(async (req, res) => {
 export const new_access_token_generate = AsyncHandler(async (req, res) => {
   const refresh_token = req.cookies.user_refresh_token;
   console.log(refresh_token);
+
   if (!refresh_token) {
     return res.status(401).json({ message: "No refresh token provided" });
   }
@@ -243,19 +244,29 @@ export const new_access_token_generate = AsyncHandler(async (req, res) => {
 
   if (stored_refresh_token) {
     if (stored_refresh_token.expiresAt > new Date()) {
-      jwt.verify(refresh_token, process.env.JWT_REFRESH_KEY, (err, user) => {
-        if (err) {
-          return res.status(403).json({ message: "Token verification failed" });
-        }
+      try {
+        const decode = jwt.verify(refresh_token, process.env.JWT_REFRESH_KEY);
+        console.log("after verifying refresh token ", decode);
 
         const new_access_token = jwt.sign(
-          { id: user.id, email: user.email },
+          { id: decode.id, email: decode.email },
           process.env.JWT_ACCESS_KEY,
           { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION }
         );
 
         return res.json({ access_token: new_access_token });
-      });
+      } catch (error) {
+        if (error.name === "TokenExpiredError") {
+          console.log("Refresh token expired:", error.expiredAt);
+          await RefreshToken.deleteOne({ token: refresh_token });
+          return res
+            .status(403)
+            .json({ message: "Refresh token expired, please log in again." });
+        } else {
+          console.log("Token verification failed:", error);
+          return res.status(403).json({ message: "Token verification failed" });
+        }
+      }
     } else {
       await RefreshToken.deleteOne({ token: refresh_token });
       return res

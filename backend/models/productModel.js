@@ -28,10 +28,13 @@ const product_schema = new mongoose.Schema({
   price: {
     type: Number,
     required: true,
+    min: [0, "Price cannot be negative"],
   },
   discount: {
     type: Number,
     required: true,
+    min: [0, "Discount cannot be negative"],
+    max: [100, "Discount cannot exceed 100%"],
   },
   variants: [
     {
@@ -106,9 +109,13 @@ const product_schema = new mongoose.Schema({
     os: {
       type: String,
       required: true,
+      enum: ["Android", "iOS", "Windows", "Others"],
     },
   },
-  tags: [String],
+  tags: {
+    type: [String],
+    default: [],
+  },
   releaseDate: {
     type: Date,
   },
@@ -141,6 +148,11 @@ const product_schema = new mongoose.Schema({
       },
     },
   ],
+});
+
+product_schema.pre("save", function (next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 product_schema.plugin(paginate);

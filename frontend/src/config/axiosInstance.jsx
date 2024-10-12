@@ -38,7 +38,9 @@ axiosInstance.interceptors.response.use(
     ) {
       // Clear the local storage or cookies where tokens are stored
       localStorage.removeItem("user_access_token");
-      document.cookie("user_refresh_token=; path=/;");
+      localStorage.removeItem("userInfo");
+      document.cookie =
+        "user_refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;"; // Correct way to clear the cookie
 
       // Redirect the user to the login page
       window.location.href = "/login";
@@ -63,11 +65,12 @@ axiosInstance.interceptors.response.use(
           }
         );
 
+        // Set the new Authorization header
         axiosInstance.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${response?.data?.access_token}`;
 
-        return axiosInstance(original_request);
+        return axiosInstance(original_request); // Retry the original request
       } catch (error) {
         console.log("Error refreshing token:", error);
         return Promise.reject(error);
@@ -120,7 +123,9 @@ adminAxiosInstance.interceptors.response.use(
     ) {
       // Clear the local storage or cookies where tokens are stored
       localStorage.removeItem("admin_access_token");
-      document.cookie("admin_refresh_token=; path=/;");
+      localStorage.removeItem("adminInfo");
+      document.cookie =
+        "admin_access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;"; // Correct way to clear the cookie
 
       // Redirect the user to the login page
       window.location.href = "/admin/login";

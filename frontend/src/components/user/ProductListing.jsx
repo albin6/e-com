@@ -10,8 +10,10 @@ import {
 import { axiosInstance } from "../../config/axiosInstance";
 import Error from "../Error";
 import ProductListingShimmer from "../ui/ProductListingShimmer";
+import { useNavigate } from "react-router-dom";
 
 export default function ProductListing() {
+  const navigate = useNavigate();
   const [brands, setBrands] = useState([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [brandExpanded, setBrandExpanded] = useState(true);
@@ -24,8 +26,17 @@ export default function ProductListing() {
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(null);
   const [totalPages, setTotalPages] = useState(0);
-
+  const [ramExpanded, setRamExpanded] = useState(false);
+  const [processorExpanded, setProcessorExpanded] = useState(false);
+  const [totalProducts, setTotalProducts] = useState(0);
   const toggleFilters = () => setFiltersOpen(!filtersOpen);
+
+  const [filters, setFilters] = useState({
+    brand: [],
+    os: [],
+    processorBrand: [],
+    ram: [],
+  });
 
   const fetchProducts = async (currentPage, itemsPerPage, sortBy) => {
     setIsLoading(true);
@@ -37,6 +48,14 @@ export default function ProductListing() {
             page: currentPage,
             limit: itemsPerPage,
             sort: sortBy,
+            brand:
+              filters.brand.length > 0 ? filters.brand.join(",") : undefined,
+            os: filters.os.length > 0 ? filters.os.join(",") : undefined,
+            processorBrand:
+              filters.processorBrand.length > 0
+                ? filters.processorBrand.join(",")
+                : undefined,
+            ram: filters.ram.length > 0 ? filters.ram.join(",") : undefined,
           },
         }
       );
@@ -45,17 +64,37 @@ export default function ProductListing() {
       setBrands(response.data.brands);
       setCategories(response.data.categories);
       setTotalPages(response.data.totalPages);
+      setTotalProducts(response.data.totalProducts);
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching products:", error);
-      setIsError(error?.response?.data?.message);
+      setIsError(
+        error?.response?.data?.message ||
+          "An error occurred while fetching products"
+      );
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchProducts(currentPage, itemsPerPage, sortBy);
-  }, [currentPage, sortBy]);
+  }, [currentPage, sortBy, filters]);
+
+  const handleFilterChange = (filterType, value) => {
+    setFilters((prevFilters) => {
+      const updatedFilters = { ...prevFilters };
+      if (updatedFilters[filterType].includes(value)) {
+        updatedFilters[filterType] = updatedFilters[filterType].filter(
+          (item) => item !== value
+        );
+      } else {
+        updatedFilters[filterType] = [...updatedFilters[filterType], value];
+      }
+      console.log("Updated filters:", updatedFilters);
+      return updatedFilters;
+    });
+    setCurrentPage(1);
+  };
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -83,6 +122,7 @@ export default function ProductListing() {
           <div className="p-4">
             <h2 className="text-xl font-bold mb-4">Filters</h2>
             <div className="space-y-4">
+              {/* Brand filter */}
               <div>
                 <button
                   className="flex items-center justify-between w-full font-semibold mb-2"
@@ -99,14 +139,22 @@ export default function ProductListing() {
                 {brandExpanded && (
                   <div className="space-y-2">
                     {brands.map((brand) => (
-                      <label key={brand.id} className="flex items-center">
-                        <input type="checkbox" className="form-checkbox" />
+                      <label key={brand._id} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={filters.brand.includes(brand.name)}
+                          onChange={() =>
+                            handleFilterChange("brand", brand.name)
+                          }
+                          className="form-checkbox"
+                        />
                         <span className="ml-2 text-sm">{brand.name}</span>
                       </label>
                     ))}
                   </div>
                 )}
               </div>
+              {/* OS filter */}
               <div>
                 <button
                   className="flex items-center justify-between w-full font-semibold mb-2"
@@ -122,14 +170,81 @@ export default function ProductListing() {
                 </button>
                 {osExpanded && (
                   <div className="space-y-2">
-                    {["Android", "Blackberry", "iOS", "Windows", "Symbian"].map(
-                      (os) => (
-                        <label key={os} className="flex items-center">
-                          <input type="checkbox" className="form-checkbox" />
-                          <span className="ml-2 text-sm">{os}</span>
+                    {["Android", "iOS", "Windows", "Other"].map((os) => (
+                      <label key={os} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={filters.os.includes(os)}
+                          onChange={() => handleFilterChange("os", os)}
+                          className="form-checkbox"
+                        />
+                        <span className="ml-2 text-sm">{os}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Processor brand filter */}
+              <div>
+                <button
+                  className="flex items-center justify-between w-full font-semibold mb-2"
+                  onClick={() => setProcessorExpanded(!processorExpanded)}
+                  aria-expanded={processorExpanded}
+                >
+                  Processor Brand
+                  {processorExpanded ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </button>
+                {processorExpanded && (
+                  <div className="space-y-2">
+                    {["Apple", "Snapdragon", "Mediatek", "Exynos"].map(
+                      (processor, index) => (
+                        <label key={index} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={filters.processorBrand.includes(processor)}
+                            onChange={() =>
+                              handleFilterChange("processorBrand", processor)
+                            }
+                            className="form-checkbox"
+                          />
+                          <span className="ml-2 text-sm">{processor}</span>
                         </label>
                       )
                     )}
+                  </div>
+                )}
+              </div>
+              {/* RAM filter */}
+              <div>
+                <button
+                  className="flex items-center justify-between w-full font-semibold mb-2"
+                  onClick={() => setRamExpanded(!ramExpanded)}
+                  aria-expanded={ramExpanded}
+                >
+                  RAM
+                  {ramExpanded ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </button>
+                {ramExpanded && (
+                  <div className="space-y-2">
+                    {["4GB", "6GB", "8GB", "12GB"].map((ram, index) => (
+                      <label key={index} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={filters.ram.includes(ram)}
+                          onChange={() => handleFilterChange("ram", ram)}
+                          className="form-checkbox"
+                        />
+                        <span className="ml-2 text-sm">{ram}</span>
+                      </label>
+                    ))}
                   </div>
                 )}
               </div>
@@ -167,7 +282,8 @@ export default function ProductListing() {
             {products.map((product) => (
               <div
                 key={product._id}
-                className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col"
+                className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col cursor-pointer"
+                onClick={() => navigate(`/product/${product._id}`)}
               >
                 <div className="relative w-full h-56 flex justify-center py-3 bg-gray-800">
                   <img
@@ -271,6 +387,11 @@ export default function ProductListing() {
                 />
               </button>
             </nav>
+          </div>
+          <div className="mt-4 text-center text-sm text-gray-600">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+            {Math.min(currentPage * itemsPerPage, totalProducts)} of{" "}
+            {totalProducts} products
           </div>
         </main>
       </div>

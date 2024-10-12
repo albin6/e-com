@@ -115,41 +115,52 @@ export const update_user_status = AsyncHandler(async (req, res) => {
 // POST /api/admin/token
 export const new_access_token_generate = AsyncHandler(async (req, res) => {
   const refresh_token = req.cookies.admin_refresh_token;
-  if (refresh_token) {
-    const stored_refresh_token = await RefreshToken.findOne({
-      token: refresh_token,
-    });
-    if (stored_refresh_token) {
-      if (stored_refresh_token.expiresAt > new Date()) {
-        jwt.verify(
-          refresh_token,
-          process.env.ADMIN_JWT_REFRESH_KEY,
-          (err, user) => {
-            if (err) {
-              return res
-                .sendStatus(403)
-                .json({ message: "Token verification failed" });
-            }
+  console.log(refresh_token);
 
-            const new_access_token = jwt.sign(
-              { id: user.id, email: user.email },
-              process.env.ADMIN_JWT_ACCESS_KEY,
-              {
-                expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION,
-              }
-            );
-            res.json({ access_token: new_access_token });
-          }
+  if (!refresh_token) {
+    return res.status(401).json({ message: "No refresh token provided" });
+  }
+
+  const stored_refresh_token = await RefreshToken.findOne({
+    token: refresh_token,
+  });
+
+  if (stored_refresh_token) {
+    if (stored_refresh_token.expiresAt > new Date()) {
+      try {
+        const user = jwt.verify(
+          refresh_token,
+          process.env.ADMIN_JWT_REFRESH_KEY
         );
-      } else {
-        await RefreshToken.deleteOne({ token: refresh_token });
-        return res.status(403).json({ message: "Refresh Token Expired" });
+        console.log("after verifying refresh token ", user);
+
+        const new_access_token = jwt.sign(
+          { id: user.id, email: user.email },
+          process.env.ADMIN_JWT_ACCESS_KEY,
+          { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION }
+        );
+
+        return res.json({ access_token: new_access_token });
+      } catch (error) {
+        if (error.name === "TokenExpiredError") {
+          console.log("Refresh token expired:", error.expiredAt);
+          await RefreshToken.deleteOne({ token: refresh_token });
+          return res
+            .status(403)
+            .json({ message: "Refresh token expired, please log in again." });
+        } else {
+          console.log("Token verification failed:", error);
+          return res.status(403).json({ message: "Token verification failed" });
+        }
       }
     } else {
-      return res.status(403).json({ message: "Invalid refresh token" });
+      await RefreshToken.deleteOne({ token: refresh_token });
+      return res
+        .status(403)
+        .json({ message: "Refresh token expired, please log in again." });
     }
   } else {
-    return res.status(401).json({ message: "No refresh token provided" });
+    return res.status(403).json({ message: "Invalid refresh token" });
   }
 });
 

@@ -27,8 +27,10 @@ import {
   addNewProduct,
   fetchProductsData,
 } from "../../utils/products/adminProductListing";
+import { useNavigate } from "react-router-dom";
 
 export default function ProductForm() {
+  const navigate = useNavigate();
   const { data, isError, isLoading } = useProductsData(fetchProductsData);
   const { mutate: addProduct } = useProductsDataMutation(addNewProduct);
   const [categories, setCategories] = useState([]);
@@ -162,6 +164,7 @@ export default function ProductForm() {
   const onSubmit = (data) => {
     console.log(data);
     addProduct(data);
+    navigate("/admin/products");
   };
 
   if (isLoading) {

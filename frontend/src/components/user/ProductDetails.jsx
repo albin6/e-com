@@ -127,8 +127,8 @@ function ProductDetails() {
   useEffect(() => {
     // Ensure the canvas is the right size
     if (targetRef.current) {
-      targetRef.current.width = 300;
-      targetRef.current.height = 300;
+      targetRef.current.width = 400;
+      targetRef.current.height = 400;
     }
   }, []);
 
@@ -155,10 +155,10 @@ function ProductDetails() {
   const averageRating =
     product.reviews.reduce((acc, review) => acc + review.rating, 0) /
     product.reviews.length;
-
+  console.log(selectedVariant);
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-4 md:p-8">
-      <nav className="mb-6">
+      <nav className="mb-6 ml-44">
         <ul className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
           <li>
             <Link to={"/"}>Home</Link>
@@ -169,18 +169,18 @@ function ProductDetails() {
           <li>{product.brand.name}</li>
         </ul>
       </nav>
-      <div ref={cursorRef} className="border absolute z-30" />
+      {/* <div ref={cursorRef} className="border absolute z-30" /> */}
       <canvas
         ref={targetRef}
-        width="300"
-        height="400"
+        width="200"
+        height="500"
         className="absolute pointer-events-none bottom-full translate-y-1/2 left-3/4 md:-translate-y-3/4 md:translate-x-0 md:bottom-16 md:left-1/2 border-8 w-2/5 h-96 z-10"
         style={{
           display: isActive ? "block" : "none",
         }}
       />
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div className="space-y-6">
+      <div className="grid gap-8 lg:grid-cols-2 mx-32">
+        <div className="space-y-6 max-w-[750px] mx-auto">
           {selectedVariant && (
             <Card className="overflow-hidden">
               <CardContent className="p-0 relative aspect-square">
@@ -234,13 +234,30 @@ function ProductDetails() {
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 max-w-[750px] mx-auto">
           <div>
-            <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-            {selectedVariant && (
-              <p className="text-lg text-gray-600">
-                {selectedVariant.ram} RAM, {selectedVariant.storage},{" "}
-                {selectedVariant.color}
+            <h1 className="text-3xl font-bold mb-2">
+              <span>{product.name} </span>
+              {selectedVariant && (
+                <span className="text-lg text-gray-600">
+                  ({selectedVariant.ram} RAM, {selectedVariant.storage},{" "}
+                  {selectedVariant.color})
+                </span>
+              )}
+            </h1>
+          </div>
+          <div>
+            {selectedVariant && selectedVariant?.stock == 0 && (
+              <p className="text-lg text-red-600">Stock out!!!</p>
+            )}
+            {selectedVariant && selectedVariant?.stock <= 10 && (
+              <p className="text-lg text-red-600">
+                Only {selectedVariant?.stock} left!!!
+              </p>
+            )}
+            {selectedVariant && selectedVariant?.stock > 10 && (
+              <p className="text-lg text-green-600">
+                {selectedVariant?.stock} left
               </p>
             )}
           </div>
@@ -438,13 +455,19 @@ function ProductDetails() {
           </div>
 
           <div className="flex gap-4">
-            <Button className="flex-1 bg-gray-600 hover:bg-gray-700 text-white">
+            <Button
+              className={`flex-1 bg-gray-600 hover:bg-gray-700 text-white ${
+                selectedVariant?.stock == 0 ? "cursor-not-allowed" : ""
+              }`}
+            >
               Buy Now
             </Button>
 
             <Button
               variant="outline"
-              className="flex-1 border-gray-600 text-gray-600 hover:bg-blue-50"
+              className={`flex-1 border-gray-600 text-gray-600 hover:bg-blue-50 ${
+                selectedVariant?.stock == 0 ? "cursor-not-allowed" : ""
+              }`}
             >
               Add to Cart
             </Button>

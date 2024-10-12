@@ -13,10 +13,12 @@ export const generateAccessToken = (user) => {
 
 export const generateRefreshToken = (user) => {
   if (!user?.role) {
+    console.log("in user");
     return jwt.sign(user, process.env.JWT_REFRESH_KEY, {
       expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRATION,
     });
   }
+  console.log("in admin");
   return jwt.sign({ user }, process.env.ADMIN_JWT_REFRESH_KEY, {
     expiresIn: process.env.ADMIN_REFRESH_TOKEN_EXPIRATION,
   });
