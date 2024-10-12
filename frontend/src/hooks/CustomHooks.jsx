@@ -3,10 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchCategories } from "../utils/category/categoryCRUD";
 import { getBrandList } from "../utils/brand/brandCRUD";
 import { fetchProductsData } from "../utils/products/adminProductListing";
-import {
-  fetchProductOfCategory,
-  fetchProductsDetails,
-} from "../utils/products/userProductListing";
+import { fetchProductsDetails } from "../utils/products/userProductListing";
 
 export function useUserAuth() {
   const user = useSelector((state) => state.user.userInfo);

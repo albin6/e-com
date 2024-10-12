@@ -14,6 +14,7 @@ import {
 } from "../controllers/products_controller.js";
 import {
   get_listing_products_details,
+  get_products_of_brand,
   get_products_of_category,
 } from "../controllers/product_listing_controller.js";
 import { authenticate_user_token } from "../middleware/authenticate_user_token.js";
@@ -42,6 +43,16 @@ user_router.get(
   authenticate_user_token,
   get_products_of_category
 );
+user_router.get(
+  "/get-products-of-brand/:brandId",
+  authenticate_user_token,
+  get_products_of_brand
+);
+user_router.get(
+  "/get-listing-products",
+  authenticate_user_token,
+  get_listing_products_details
+);
 
 // ----------------------------------------------------
 // ----------------------------------------------------
@@ -51,11 +62,6 @@ user_router.get(
   get_all_categories
 );
 user_router.get("/get-all-brands", authenticate_user_token, get_all_brands);
-user_router.get(
-  "/get-listing-products",
-  authenticate_user_token,
-  get_listing_products_details
-);
 
 // ----------------------------------------------------
 // ----------------------------------------------------

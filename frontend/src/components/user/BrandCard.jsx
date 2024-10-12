@@ -6,7 +6,7 @@ const BrandCard = ({ brand }) => {
   return (
     <div
       className="bg-white p-3 sm:p-4 rounded-lg shadow text-center transition-transform duration-300 hover:scale-105 cursor-pointer"
-      onClick={() => navigate(`/products`)}
+      onClick={() => navigate(`/products/brands/${brand._id}`)}
     >
       <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-2 sm:mb-4 rounded-full overflow-hidden">
         <img

@@ -210,6 +210,15 @@ export const CardHeader = ({ children, className, ...props }) => (
   </div>
 );
 
+export const CardFooter = ({ className = "", children, ...props }) => (
+  <div
+    className={`px-6 py-4 bg-gray-50 border-t border-gray-200 ${className}`}
+    {...props}
+  >
+    {children}
+  </div>
+);
+
 export const CardTitle = ({ children, className, ...props }) => (
   <h2 className={`text-xl font-semibold ${className}`} {...props}>
     {children}

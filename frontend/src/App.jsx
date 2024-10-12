@@ -19,6 +19,8 @@ import ForgotPassword from "./components/user/ForgotPassword";
 import ProductDetailsPage from "./pages/user/ProductDetailsPage";
 import RequireAuthentication from "./private/user/RequireAuthentication";
 import ProductListingPage from "./pages/user/ProductListingPage";
+import CategoryListingPage from "./pages/user/CategoryListingPage";
+import BrandListingPage from "./pages/user/BrandListingPage";
 
 function AppLayout() {
   const admin = useSelector((state) => state.admin.adminInfo);
@@ -52,6 +54,22 @@ function AppLayout() {
           element={
             <RequireAuthentication>
               <ProductDetailsPage />
+            </RequireAuthentication>
+          }
+        />
+        <Route
+          path="/products/categories/:categoryId"
+          element={
+            <RequireAuthentication>
+              <CategoryListingPage />
+            </RequireAuthentication>
+          }
+        />
+        <Route
+          path="/products/brands/:brandId"
+          element={
+            <RequireAuthentication>
+              <BrandListingPage></BrandListingPage>
             </RequireAuthentication>
           }
         />

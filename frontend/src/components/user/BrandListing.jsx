@@ -8,10 +8,12 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { axiosInstance } from "../../config/axiosInstance";
+import { Link, useParams } from "react-router-dom";
 import Error from "../Error";
 import ProductListingShimmer from "../ui/ProductListingShimmer";
 
-export default function ProductListing() {
+const BrandListing = () => {
+  const { brandId } = useParams();
   const [brands, setBrands] = useState([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [brandExpanded, setBrandExpanded] = useState(true);
@@ -31,7 +33,7 @@ export default function ProductListing() {
     setIsLoading(true);
     try {
       const response = await axiosInstance.get(
-        `/api/users/get-listing-products`,
+        `/api/users/get-products-of-brand/${brandId}`,
         {
           params: {
             page: currentPage,
@@ -41,10 +43,10 @@ export default function ProductListing() {
         }
       );
 
-      setProducts(response.data.products);
-      setBrands(response.data.brands);
-      setCategories(response.data.categories);
-      setTotalPages(response.data.totalPages);
+      setProducts(response?.data?.products);
+      setBrands(response?.data?.brands);
+      setCategories(response?.data?.categories);
+      setTotalPages(response?.data?.totalPages);
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -61,6 +63,8 @@ export default function ProductListing() {
 
   const handleSort = (e) => {
     setSortBy(e.target.value);
+    // You would typically call an API to sort the data here
+    // For now, we'll just set the state
   };
 
   if (isLoading) {
@@ -68,16 +72,27 @@ export default function ProductListing() {
   }
 
   if (isError) {
-    return <Error error={isError} />;
+    return <Error error={isError} reset={fetchProducts} />;
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <nav className="mb-6">
+        <ul className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+          <li>
+            <Link to={"/"}>Home</Link>
+          </li>
+          <ChevronRight className="w-4 h-4" />
+          <li>Top Brands</li>
+          <ChevronRight className="w-4 h-4" />
+          <li>{products[0].brand.name}</li>
+        </ul>
+      </nav>
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Filters sidebar */}
         <aside
-          className={`lg:w-64 bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-in-out ${
-            filtersOpen ? "max-h-screen" : "max-h-0 lg:max-h-screen"
+          className={`lg:w-64 bg-white rounded-lg shadow-md ${
+            filtersOpen ? "block" : "hidden lg:block"
           }`}
         >
           <div className="p-4">
@@ -99,7 +114,7 @@ export default function ProductListing() {
                 {brandExpanded && (
                   <div className="space-y-2">
                     {brands.map((brand) => (
-                      <label key={brand.id} className="flex items-center">
+                      <label key={brand._id} className="flex items-center">
                         <input type="checkbox" className="form-checkbox" />
                         <span className="ml-2 text-sm">{brand.name}</span>
                       </label>
@@ -167,7 +182,7 @@ export default function ProductListing() {
             {products.map((product) => (
               <div
                 key={product._id}
-                className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col"
+                className="bg-white rounded-lg shadow-md overflow-hidden"
               >
                 <div className="relative w-full h-56 flex justify-center py-3 bg-gray-800">
                   <img
@@ -178,23 +193,21 @@ export default function ProductListing() {
                     className=" h-full object-cover"
                   />
                 </div>
-                <div className="p-4 flex-grow flex flex-col justify-between">
-                  <div>
-                    <h3 className="font-semibold text-base sm:text-lg mb-2 line-clamp-2">
-                      {product.name}
-                    </h3>
-                    <div className="flex items-center mb-2">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                            i < product.rating
-                              ? "text-yellow-400 fill-yellow-400"
-                              : "text-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-base sm:text-lg mb-2 line-clamp-2">
+                    {product.name}
+                  </h3>
+                  <div className="flex items-center mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                          i < product.rating
+                            ? "text-yellow-400 fill-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    ))}
                   </div>
                   <div>
                     <div className="flex items-center justify-between">
@@ -276,4 +289,6 @@ export default function ProductListing() {
       </div>
     </div>
   );
-}
+};
+
+export default BrandListing;

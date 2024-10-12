@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useUserProduct } from "../../hooks/CustomHooks";
 import { fetchProduct } from "../../utils/products/userProductListing";
 import {
@@ -160,7 +160,11 @@ function ProductDetails() {
     <div className="min-h-screen bg-gray-50 text-gray-900 p-4 md:p-8">
       <nav className="mb-6">
         <ul className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-          <li>{product.category.name}</li>
+          <li>
+            <Link to={"/"}>Home</Link>
+          </li>
+          <ChevronRight className="w-4 h-4" />
+          <li>{product.category.title}</li>
           <ChevronRight className="w-4 h-4" />
           <li>{product.brand.name}</li>
         </ul>

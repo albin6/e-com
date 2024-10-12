@@ -8,6 +8,8 @@ import BrandCard from "./BrandCard";
 import { useUserProductsData } from "../../hooks/CustomHooks";
 import { fetchProductsDetails } from "../../utils/products/userProductListing";
 import ErrorBoundary from "../errorBoundaries/ErrorBoundary";
+import Error from "../Error";
+import Shimmer from "../ui/HomeShimmer";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -29,16 +31,12 @@ const Home = () => {
   }, [data]);
 
   if (isLoading) {
-    return <h2 className="text-gray-800">Loading...</h2>;
+    return <Shimmer />;
   }
 
   if (isError) {
     console.error("Error fetching data:", error);
-    return (
-      <h2 className="text-gray-800">
-        Error: {error?.message || "An unexpected error occurred"}
-      </h2>
-    );
+    return <Error />;
   }
 
   return (
@@ -83,7 +81,7 @@ const Home = () => {
         <section className="py-8 sm:py-12 md:py-16 px-4 md:px-8 bg-gray-50">
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">
-              Flagship Phones
+              For You...
             </h2>
             <Link to="/products/list">
               <Button
@@ -106,7 +104,7 @@ const Home = () => {
         <section className="py-8 sm:py-12 md:py-16 px-4 md:px-8 bg-gray-50">
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">
-              Shop by Brand
+              Top Brands
             </h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6 md:gap-8">
