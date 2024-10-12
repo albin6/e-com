@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { PlusCircle, X, Upload, Crop, ShoppingBag } from "lucide-react";
-import Cropper from "react-easy-crop";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
+import "react-image-crop/dist/ReactCrop.css";
+import CropperModal from "../imageCropper/CropperModal";
 
 import {
   Card,
@@ -18,9 +19,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/ui-components";
+import {
+  useProductData,
+  useProductsDataMutation,
+} from "../../hooks/CustomHooks";
+import {
+  fetchProductData,
+  updateProduct,
+} from "../../utils/products/adminProductListing";
+import { useNavigate, useParams } from "react-router-dom";
 
-export default function EditProductForm({ productId }) {
-  const [isLoading, setIsLoading] = useState(true);
+export default function EditProductForm() {
+  const navigate = useNavigate();
+  const { productId } = useParams();
+  const { data, isError, isLoading } = useProductData(
+    fetchProductData(productId)
+  );
+  const { mutate: editProduct } = useProductsDataMutation(updateProduct);
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [product, setProduct] = useState(null);
+
   const {
     register,
     control,
@@ -29,24 +48,26 @@ export default function EditProductForm({ productId }) {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      variants: [
-        {
-          color: "",
-          ram: "",
-          storage: "",
-          price: 0,
-          stock: 0,
-          images: [""],
-          sku: "",
-        },
-      ],
+      name: "",
+      brand: "",
+      description: "",
+      category: "",
+      price: "",
+      discount: "",
+      variants: [],
       specifications: {
+        processor: "",
+        battery: "",
         camera: { front: "", rear: "" },
         display: { size: "", resolution: "", type: "" },
+        os: "",
       },
       tags: [],
+      releaseDate: "",
+      isFeatured: false,
     },
   });
+
   const {
     fields: variantFields,
     append: appendVariant,
@@ -56,90 +77,119 @@ export default function EditProductForm({ productId }) {
     name: "variants",
   });
 
-  const [croppingImageIndex, setCroppingImageIndex] = useState(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [currentImage, setCurrentImage] = useState(null);
+  const [currentVariantIndex, setCurrentVariantIndex] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(null);
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        // Replace this with your actual API call
-        const response = await fetch(`/api/products/${productId}`);
-        const productData = await response.json();
-
-        // Transform tags from array to comma-separated string
-        productData.tags = productData.tags.join(", ");
-
-        reset(productData);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching product:", error);
-        setIsLoading(false);
+    if (data) {
+      setCategories(data.categories || []);
+      setBrands(data.brands || []);
+      const foundProduct = data.product;
+      if (foundProduct) {
+        setProduct(foundProduct);
+        reset({
+          name: foundProduct.name,
+          brand: foundProduct.brand.name,
+          description: foundProduct.description,
+          category: foundProduct.category.title,
+          price: foundProduct.price,
+          discount: foundProduct.discount,
+          variants: foundProduct.variants,
+          specifications: foundProduct.specifications,
+          tags: foundProduct.tags.join(", "),
+          releaseDate: new Date(foundProduct.releaseDate)
+            .toISOString()
+            .split("T")[0],
+          isFeatured: foundProduct.isFeatured,
+        });
       }
+    }
+  }, [data, productId, reset]);
+
+  const handleImageUpload = (event, variantIndex) => {
+    const files = Array.from(event.target.files);
+    const newImages = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+
+    const updatedVariants = [...variantFields];
+    updatedVariants[variantIndex].images = [
+      ...updatedVariants[variantIndex].images,
+      ...newImages,
+    ];
+
+    reset({
+      ...control._formValues,
+      variants: updatedVariants,
+    });
+  };
+
+  const removeImage = (variantIndex, imageIndex) => {
+    const updatedVariants = [...variantFields];
+    updatedVariants[variantIndex].images.splice(imageIndex, 1);
+
+    reset({
+      ...control._formValues,
+      variants: updatedVariants,
+    });
+  };
+
+  const startCropping = (variantIndex, imageIndex) => {
+    setCurrentVariantIndex(variantIndex);
+    setCurrentImageIndex(imageIndex);
+    setCurrentImage(variantFields[variantIndex].images[imageIndex].preview);
+    setCropModalOpen(true);
+  };
+
+  const updateAvatar = (croppedImageBase64, croppedImageUrl) => {
+    const updatedVariants = [...variantFields];
+    updatedVariants[currentVariantIndex].images[currentImageIndex] = {
+      file: dataURLtoFile(croppedImageBase64, "cropped_image.jpg"),
+      preview: croppedImageUrl,
     };
 
-    fetchProduct();
-  }, [productId, reset]);
+    reset({
+      ...control._formValues,
+      variants: updatedVariants,
+    });
 
-  const onSubmit = async (data) => {
-    try {
-      // Transform tags back to array
-      data.tags = data.tags.split(",").map((tag) => tag.trim());
-
-      // Replace this with your actual API call
-      const response = await fetch(`/api/products/${productId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        console.log("Product updated successfully");
-        // Add any success handling here (e.g., showing a success message, redirecting)
-      } else {
-        throw new Error("Failed to update product");
-      }
-    } catch (error) {
-      console.error("Error updating product:", error);
-      // Add error handling here (e.g., showing an error message)
-    }
+    setCropModalOpen(false);
+    setCurrentImage(null);
+    setCurrentVariantIndex(null);
+    setCurrentImageIndex(null);
   };
 
-  const handleImageUpload = (event, index) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newImages = [...variantFields[index].images];
-        newImages.push(reader.result);
-        // Update the form data
-      };
-      reader.readAsDataURL(file);
+  const dataURLtoFile = (dataurl, filename) => {
+    let arr = dataurl.split(","),
+      mime = arr[0].match(/:(.*?);/)[1],
+      bstr = atob(arr[1]),
+      n = bstr.length,
+      u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
     }
+    return new File([u8arr], filename, { type: mime });
   };
 
-  const startCropping = (index) => {
-    setCroppingImageIndex(index);
+  const onSubmit = (data) => {
+    console.log(data);
+    editProduct({ id: productId, ...data });
+    navigate("/admin/products");
   };
-
-  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
-
-  const handleCropSave = useCallback(async () => {
-    try {
-      // Implement cropping logic here
-      setCroppingImageIndex(null);
-    } catch (e) {
-      console.error(e);
-    }
-  }, [croppedAreaPixels]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <h3>Loading....</h3>;
+  }
+
+  if (isError) {
+    return <h3>Error loading product data. Please try again later.</h3>;
+  }
+
+  if (!product) {
+    return <h3>Product not found.</h3>;
   }
 
   return (
@@ -154,12 +204,16 @@ export default function EditProductForm({ productId }) {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-              <div>
+              <div className="w-full">
                 <Label htmlFor="name">Product Name</Label>
                 <Input
                   id="name"
                   {...register("name", {
                     required: "Product name is required",
+                    minLength: {
+                      value: 3,
+                      message: "Minimum length is 3 characters",
+                    },
                   })}
                 />
                 {errors.name && (
@@ -170,9 +224,27 @@ export default function EditProductForm({ productId }) {
               </div>
               <div>
                 <Label htmlFor="brand">Brand</Label>
-                <Input
-                  id="brand"
-                  {...register("brand", { required: "Brand is required" })}
+                <Controller
+                  name="brand"
+                  control={control}
+                  rules={{ required: "Brand is required" }}
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a brand" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {brands.map((brand) => (
+                          <SelectItem key={brand._id} value={brand.name}>
+                            {brand.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 />
                 {errors.brand && (
                   <p className="text-red-500 text-xs mt-1">
@@ -182,11 +254,27 @@ export default function EditProductForm({ productId }) {
               </div>
               <div>
                 <Label htmlFor="category">Category</Label>
-                <Input
-                  id="category"
-                  {...register("category", {
-                    required: "Category is required",
-                  })}
+                <Controller
+                  name="category"
+                  control={control}
+                  rules={{ required: "Category is required" }}
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category._id} value={category.title}>
+                            {category.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 />
                 {errors.category && (
                   <p className="text-red-500 text-xs mt-1">
@@ -199,11 +287,37 @@ export default function EditProductForm({ productId }) {
                 <Input
                   id="price"
                   type="number"
-                  {...register("price", { required: "Price is required" })}
+                  {...register("price", {
+                    required: "Price is required",
+                    min: { value: 0, message: "Price must be positive" },
+                  })}
                 />
                 {errors.price && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors.price.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="discount">Discount (%)</Label>
+                <Input
+                  id="discount"
+                  type="number"
+                  {...register("discount", {
+                    required: "Discount is required",
+                    min: {
+                      value: 0,
+                      message: "Discount must be between 0 and 100",
+                    },
+                    max: {
+                      value: 100,
+                      message: "Discount must be between 0 and 100",
+                    },
+                  })}
+                />
+                {errors.discount && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.discount.message}
                   </p>
                 )}
               </div>
@@ -215,6 +329,10 @@ export default function EditProductForm({ productId }) {
                 id="description"
                 {...register("description", {
                   required: "Description is required",
+                  minLength: {
+                    value: 10,
+                    message: "Minimum length is 10 characters",
+                  },
                 })}
               />
               {errors.description && (
@@ -226,58 +344,76 @@ export default function EditProductForm({ productId }) {
 
             <div>
               <Label>Variants</Label>
-              {variantFields.map((field, index) => (
+              {variantFields.map((field, variantIndex) => (
                 <Card key={field.id} className="mb-4">
                   <CardContent className="p-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor={`variants.${index}.color`}>Color</Label>
+                        <Label htmlFor={`variants.${variantIndex}.color`}>
+                          Color
+                        </Label>
                         <Input
-                          {...register(`variants.${index}.color`, {
+                          {...register(`variants.${variantIndex}.color`, {
                             required: "Color is required",
                           })}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`variants.${index}.ram`}>RAM</Label>
+                        <Label htmlFor={`variants.${variantIndex}.ram`}>
+                          RAM
+                        </Label>
                         <Input
-                          {...register(`variants.${index}.ram`, {
+                          {...register(`variants.${variantIndex}.ram`, {
                             required: "RAM is required",
                           })}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`variants.${index}.storage`}>
+                        <Label htmlFor={`variants.${variantIndex}.storage`}>
                           Storage
                         </Label>
                         <Input
-                          {...register(`variants.${index}.storage`, {
+                          {...register(`variants.${variantIndex}.storage`, {
                             required: "Storage is required",
                           })}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`variants.${index}.price`}>Price</Label>
+                        <Label htmlFor={`variants.${variantIndex}.price`}>
+                          Price
+                        </Label>
                         <Input
                           type="number"
-                          {...register(`variants.${index}.price`, {
+                          {...register(`variants.${variantIndex}.price`, {
                             required: "Price is required",
+                            min: {
+                              value: 0,
+                              message: "Price must be positive",
+                            },
                           })}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`variants.${index}.stock`}>Stock</Label>
+                        <Label htmlFor={`variants.${variantIndex}.stock`}>
+                          Stock
+                        </Label>
                         <Input
                           type="number"
-                          {...register(`variants.${index}.stock`, {
+                          {...register(`variants.${variantIndex}.stock`, {
                             required: "Stock is required",
+                            min: {
+                              value: 0,
+                              message: "Stock must be positive",
+                            },
                           })}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`variants.${index}.sku`}>SKU</Label>
+                        <Label htmlFor={`variants.${variantIndex}.sku`}>
+                          SKU
+                        </Label>
                         <Input
-                          {...register(`variants.${index}.sku`, {
+                          {...register(`variants.${variantIndex}.sku`, {
                             required: "SKU is required",
                           })}
                         />
@@ -286,30 +422,44 @@ export default function EditProductForm({ productId }) {
                     <div className="mt-4">
                       <Label>Images</Label>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {field.images.map((image, imgIndex) => (
-                          <div key={imgIndex} className="relative">
+                        {field.images.map((image, imageIndex) => (
+                          <div key={imageIndex} className="relative">
                             <img
-                              src={image}
-                              alt={`Variant ${index + 1} Image ${imgIndex + 1}`}
+                              src={
+                                image.preview ||
+                                `${
+                                  import.meta.env.VITE_API_BASE_URL
+                                }/products/${image}`
+                              }
+                              alt={`Variant ${variantIndex + 1} Image ${
+                                imageIndex + 1
+                              }`}
                               className="w-20 h-20 object-cover rounded"
                             />
                             <button
                               type="button"
-                              onClick={() => {
-                                const newImages = [...field.images];
-                                newImages.splice(imgIndex, 1);
-                                // Update form data to remove this image
-                              }}
+                              onClick={() =>
+                                removeImage(variantIndex, imageIndex)
+                              }
                               className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
                             >
                               <X className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                startCropping(variantIndex, imageIndex)
+                              }
+                              className="absolute bottom-0 right-0 bg-blue-500 text-white rounded-full p-1"
+                            >
+                              <Crop className="w-4 h-4" />
                             </button>
                           </div>
                         ))}
                       </div>
                       <Input
                         type="file"
-                        onChange={(e) => handleImageUpload(e, index)}
+                        onChange={(e) => handleImageUpload(e, variantIndex)}
                         multiple
                         accept="image/*"
                         className="mt-2"
@@ -317,8 +467,8 @@ export default function EditProductForm({ productId }) {
                     </div>
                     <Button
                       type="button"
-                      onClick={() => removeVariant(index)}
-                      className="mt-2"
+                      onClick={() => removeVariant(variantIndex)}
+                      className="mt-2 bg-red-600 text-white"
                       variant="destructive"
                     >
                       Remove Variant
@@ -328,6 +478,7 @@ export default function EditProductForm({ productId }) {
               ))}
               <Button
                 type="button"
+                className="bg-gray-800 hover:bg-gray-600 text-white"
                 onClick={() =>
                   appendVariant({
                     color: "",
@@ -335,7 +486,7 @@ export default function EditProductForm({ productId }) {
                     storage: "",
                     price: 0,
                     stock: 0,
-                    images: [""],
+                    images: [],
                     sku: "",
                   })
                 }
@@ -345,7 +496,10 @@ export default function EditProductForm({ productId }) {
             </div>
 
             <div>
-              <Label>Specifications</Label>
+              <Label className="font-semibold">Specifications</Label>
+              <br />
+              <hr />
+              <br />
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="specifications.processor">Processor</Label>
@@ -431,7 +585,17 @@ export default function EditProductForm({ productId }) {
 
             <div>
               <Label htmlFor="releaseDate">Release Date</Label>
-              <Input type="date" {...register("releaseDate")} />
+              <Input
+                type="date"
+                {...register("releaseDate", {
+                  required: "Release date is required",
+                })}
+              />
+              {errors.releaseDate && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.releaseDate.message}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center">
@@ -444,37 +608,22 @@ export default function EditProductForm({ productId }) {
               <Label htmlFor="isFeatured">Featured Product</Label>
             </div>
 
-            <Button type="submit" className="w-full">
+            <Button
+              type="submit"
+              className="w-full bg-gray-800 hover:bg-gray-600 text-white"
+            >
               Update Product
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      {croppingImageIndex !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-96">
-            <CardContent className="p-4">
-              <div className="relative h-64 mb-4">
-                <Cropper
-                  image={variantFields[croppingImageIndex].images[0]}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={4 / 3}
-                  onCropChange={setCrop}
-                  onCropComplete={onCropComplete}
-                  onZoomChange={setZoom}
-                />
-              </div>
-              <div className="flex justify-between">
-                <Button onClick={() => setCroppingImageIndex(null)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleCropSave}>Save Crop</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {cropModalOpen && (
+        <CropperModal
+          updateAvatar={updateAvatar}
+          closeModal={() => setCropModalOpen(false)}
+          imageSrc={currentImage}
+        />
       )}
     </div>
   );

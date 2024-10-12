@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Star,
   ChevronDown,
@@ -7,83 +7,73 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-
-const phones = [
-  {
-    id: 1,
-    name: "CMF BY NOTHING PHONE 1",
-    price: 16599,
-    oldPrice: 18599,
-    rating: 5,
-    image: "/placeholder.svg?height=300&width=300",
-  },
-  {
-    id: 2,
-    name: "CMF BY NOTHING PHONE 1",
-    price: 16599,
-    oldPrice: 18599,
-    rating: 5,
-    image: "/placeholder.svg?height=300&width=300",
-  },
-  {
-    id: 3,
-    name: "CMF BY NOTHING PHONE 1",
-    price: 16599,
-    oldPrice: 18599,
-    rating: 5,
-    image: "/placeholder.svg?height=300&width=300",
-  },
-  {
-    id: 4,
-    name: "CMF BY NOTHING PHONE 1",
-    price: 16599,
-    oldPrice: 18599,
-    rating: 5,
-    image: "/placeholder.svg?height=300&width=300",
-  },
-  {
-    id: 5,
-    name: "CMF BY NOTHING PHONE 1",
-    price: 16599,
-    oldPrice: 18599,
-    rating: 5,
-    image: "/placeholder.svg?height=300&width=300",
-  },
-  {
-    id: 6,
-    name: "CMF BY NOTHING PHONE 1",
-    price: 16599,
-    oldPrice: 18599,
-    rating: 5,
-    image: "/placeholder.svg?height=300&width=300",
-  },
-  // Add more phone objects to test pagination
-  ...Array.from({ length: 18 }, (_, i) => ({
-    id: i + 7,
-    name: `CMF BY NOTHING PHONE ${i + 2}`,
-    price: 16599,
-    oldPrice: 18599,
-    rating: 5,
-    image: "/placeholder.svg?height=300&width=300",
-  })),
-];
+import { axiosInstance } from "../../config/axiosInstance";
 
 const ProductListing = () => {
+  const [brands, setBrands] = useState([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [brandExpanded, setBrandExpanded] = useState(true);
   const [osExpanded, setOsExpanded] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const [sortBy, setSortBy] = useState("popularity");
+  const itemsPerPage = 3;
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+  const [totalPages, setTotalPages] = useState(0);
 
   const toggleFilters = () => setFiltersOpen(!filtersOpen);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = phones.slice(indexOfFirstItem, indexOfLastItem);
+  const fetchProducts = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axiosInstance.get(
+        `/api/users/get-listing-products`,
+        {
+          params: {
+            page: currentPage,
+            limit: itemsPerPage,
+            sort: sortBy,
+          },
+        }
+      );
 
-  const totalPages = Math.ceil(phones.length / itemsPerPage);
+      setProducts(response.data.products);
+      setBrands(response.data.brands);
+      setCategories(response.data.categories);
+      setTotalPages(response.data.totalPages);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setIsError(true);
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, [currentPage]);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const handleSort = (e) => {
+    setSortBy(e.target.value);
+    // You would typically call an API to sort the data here
+    // For now, we'll just set the state
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-10">Loading...</div>;
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-10 text-red-500">
+        Error loading products. Please try again later.
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -112,20 +102,10 @@ const ProductListing = () => {
                 </button>
                 {brandExpanded && (
                   <div className="space-y-2">
-                    {[
-                      "Apple",
-                      "Samsung",
-                      "Nothing",
-                      "Vivo",
-                      "Google",
-                      "Motorola",
-                      "Redmi",
-                      "Lenovo",
-                      "Honor",
-                    ].map((brand) => (
-                      <label key={brand} className="flex items-center">
+                    {brands.map((brand) => (
+                      <label key={brand.id} className="flex items-center">
                         <input type="checkbox" className="form-checkbox" />
-                        <span className="ml-2">{brand}</span>
+                        <span className="ml-2 text-sm">{brand.name}</span>
                       </label>
                     ))}
                   </div>
@@ -150,7 +130,7 @@ const ProductListing = () => {
                       (os) => (
                         <label key={os} className="flex items-center">
                           <input type="checkbox" className="form-checkbox" />
-                          <span className="ml-2">{os}</span>
+                          <span className="ml-2 text-sm">{os}</span>
                         </label>
                       )
                     )}
@@ -173,34 +153,43 @@ const ProductListing = () => {
                 <SlidersHorizontal className="h-5 w-5 mr-2" />
                 Filters
               </button>
-              <select className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
-                <option>Sort By</option>
-                <option>Popularity</option>
-                <option>Newest First</option>
-                <option>Price Low-High</option>
-                <option>Price High-Low</option>
+              <select
+                className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm"
+                value={sortBy}
+                onChange={handleSort}
+              >
+                <option value="popularity">Sort By: Popularity</option>
+                <option value="newest">Sort By: Newest First</option>
+                <option value="priceLowHigh">Sort By: Price Low-High</option>
+                <option value="priceHighLow">Sort By: Price High-Low</option>
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentItems.map((phone) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {products.map((product) => (
               <div
-                key={phone.id}
+                key={product._id}
                 className="bg-white rounded-lg shadow-md overflow-hidden"
               >
-                <img
-                  src={phone.image}
-                  alt={phone.name}
-                  className="w-full h-48 object-cover"
-                />
+                <div className="relative w-full h-48 sm:h-56">
+                  <img
+                    src={`${import.meta.env.VITE_API_BASE_URL}/products/${
+                      product.variants[0].images[0]
+                    }`}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">{phone.name}</h3>
+                  <h3 className="font-semibold text-base sm:text-lg mb-2 line-clamp-2">
+                    {product.name}
+                  </h3>
                   <div className="flex items-center mb-2">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-5 w-5 ${
-                          i < phone.rating
+                        className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                          i < product.rating
                             ? "text-yellow-400 fill-yellow-400"
                             : "text-gray-300"
                         }`}
@@ -208,12 +197,14 @@ const ProductListing = () => {
                     ))}
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold">
-                      ₹{phone.price.toLocaleString()}
+                    <span className="text-base sm:text-lg font-bold">
+                      ₹{product.price.toLocaleString()}
                     </span>
-                    <span className="text-sm line-through text-gray-500">
-                      ₹{phone.oldPrice.toLocaleString()}
-                    </span>
+                    {product.oldPrice && (
+                      <span className="text-xs sm:text-sm line-through text-gray-500">
+                        ₹{product.oldPrice.toLocaleString()}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -226,31 +217,42 @@ const ProductListing = () => {
               <button
                 onClick={() => paginate(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="sr-only">Previous</span>
-                <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                <ChevronLeft
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                  aria-hidden="true"
+                />
               </button>
-              {[...Array(totalPages)].map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => paginate(index + 1)}
-                  className={`px-4 py-2 border border-gray-300 text-sm font-medium ${
-                    currentPage === index + 1
-                      ? "bg-gray-50 border-gray-500 text-gray-600"
-                      : "bg-white text-gray-500 hover:bg-gray-50"
-                  }`}
-                >
-                  {index + 1}
-                </button>
-              ))}
+              <div className="hidden sm:flex">
+                {[...Array(totalPages)].map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => paginate(index + 1)}
+                    className={`px-4 py-2 border border-gray-300 text-sm font-medium ${
+                      currentPage === index + 1
+                        ? "bg-gray-50 border-gray-500 text-gray-600"
+                        : "bg-white text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
+              <span className="sm:hidden px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                {currentPage} / {totalPages}
+              </span>
               <button
                 onClick={() => paginate(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="sr-only">Next</span>
-                <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                <ChevronRight
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                  aria-hidden="true"
+                />
               </button>
             </nav>
           </div>

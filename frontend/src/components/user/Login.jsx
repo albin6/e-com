@@ -35,14 +35,6 @@ export default function Login() {
       const response = await axiosInstance.post("/api/users/login", values);
       console.log("Server response:", response.data);
 
-      if (response?.data?.access_token) {
-        console.log("access_token", response?.data?.access_token);
-        localStorage.setItem(
-          "access_token",
-          JSON.stringify(response?.data?.access_token)
-        );
-      }
-
       dispatch(setUserDetails(response.data.user));
     } catch (error) {
       if (error?.response?.status === 401) {

@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
+import { useUserProduct } from "../../hooks/CustomHooks";
+import { fetchProduct } from "../../utils/products/userProductListing";
 import {
   Heart,
   Share2,
@@ -14,26 +17,120 @@ import {
   Card,
   CardContent,
   Button,
-  RadioGroup,
-  RadioGroupItem,
 } from "../ui/ui-components";
-import { useParams } from "react-router-dom";
-import { useUserProduct } from "../../hooks/CustomHooks";
-import { fetchProduct } from "../../utils/products/userProductListing";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import { useMouseOverZoom } from "../../hooks/useMouseOverZoom";
+
+// Corrected useMouseOverZoom hook
 
 function ProductDetails() {
   const { id } = useParams();
   const { data: product, isLoading, error } = useUserProduct(fetchProduct(id));
-  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [selectedColor, setSelectedColor] = useState("");
+  const [selectedRam, setSelectedRam] = useState("");
+  const [selectedStorage, setSelectedStorage] = useState("");
+  const [availableRam, setAvailableRam] = useState([]);
+  const [availableStorage, setAvailableStorage] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  console.log(product);
 
   useEffect(() => {
     if (product && product.variants.length > 0) {
-      setSelectedVariant(product.variants[0]);
+      const firstVariant = product.variants[0];
+      setSelectedColor(firstVariant.color);
+      setSelectedRam(firstVariant.ram);
+      setSelectedStorage(firstVariant.storage);
+      updateAvailableOptions(firstVariant.color);
     }
   }, [product]);
+
+  const updateAvailableOptions = (color) => {
+    const variantsForColor = product.variants.filter((v) => v.color === color);
+    const ramOptions = [...new Set(variantsForColor.map((v) => v.ram))];
+    setAvailableRam(ramOptions);
+    setSelectedRam(ramOptions[0]);
+
+    const storageOptions = [
+      ...new Set(
+        variantsForColor
+          .filter((v) => v.ram === ramOptions[0])
+          .map((v) => v.storage)
+      ),
+    ];
+    setAvailableStorage(storageOptions);
+    setSelectedStorage(storageOptions[0]);
+  };
+
+  const handleColorChange = (color) => {
+    setSelectedColor(color);
+    updateAvailableOptions(color);
+    setCurrentImageIndex(0);
+  };
+
+  const handleRamChange = (ram) => {
+    setSelectedRam(ram);
+    const storageOptions = [
+      ...new Set(
+        product.variants
+          .filter((v) => v.color === selectedColor && v.ram === ram)
+          .map((v) => v.storage)
+      ),
+    ];
+    setAvailableStorage(storageOptions);
+    setSelectedStorage(storageOptions[0]);
+  };
+
+  const handleStorageChange = (storage) => {
+    setSelectedStorage(storage);
+  };
+
+  const getSelectedVariant = () => {
+    return product.variants.find(
+      (v) =>
+        v.color === selectedColor &&
+        v.ram === selectedRam &&
+        v.storage === selectedStorage
+    );
+  };
+
+  const nextImage = () => {
+    const selectedVariant = getSelectedVariant();
+    if (selectedVariant) {
+      setCurrentImageIndex(
+        (prevIndex) => (prevIndex + 1) % selectedVariant.images.length
+      );
+    }
+  };
+
+  const prevImage = () => {
+    const selectedVariant = getSelectedVariant();
+    if (selectedVariant) {
+      setCurrentImageIndex(
+        (prevIndex) =>
+          (prevIndex - 1 + selectedVariant.images.length) %
+          selectedVariant.images.length
+      );
+    }
+  };
+
+  const sourceRef = useRef(null);
+  const targetRef = useRef(null);
+  const cursorRef = useRef(null);
+
+  // Use the zoom hook
+  const { isActive, zoomBounds } = useMouseOverZoom(
+    sourceRef,
+    targetRef,
+    cursorRef,
+    50
+  );
+
+  useEffect(() => {
+    // Ensure the canvas is the right size
+    if (targetRef.current) {
+      targetRef.current.width = 300;
+      targetRef.current.height = 300;
+    }
+  }, []);
 
   if (isLoading)
     return (
@@ -54,33 +151,7 @@ function ProductDetails() {
       </div>
     );
 
-  const handleVariantChange = (sku) => {
-    const newVariant = product.variants.find((v) => v.sku === sku);
-    if (newVariant) {
-      setSelectedVariant(newVariant);
-      console.log(newVariant);
-      setCurrentImageIndex(0);
-    }
-  };
-
-  const nextImage = () => {
-    if (selectedVariant) {
-      setCurrentImageIndex(
-        (prevIndex) => (prevIndex + 1) % selectedVariant.images.length
-      );
-    }
-  };
-
-  const prevImage = () => {
-    if (selectedVariant) {
-      setCurrentImageIndex(
-        (prevIndex) =>
-          (prevIndex - 1 + selectedVariant.images.length) %
-          selectedVariant.images.length
-      );
-    }
-  };
-
+  const selectedVariant = getSelectedVariant();
   const averageRating =
     product.reviews.reduce((acc, review) => acc + review.rating, 0) /
     product.reviews.length;
@@ -94,37 +165,46 @@ function ProductDetails() {
           <li>{product.brand.name}</li>
         </ul>
       </nav>
-
+      <div ref={cursorRef} className="border absolute z-30" />
+      <canvas
+        ref={targetRef}
+        width="300"
+        height="400"
+        className="absolute pointer-events-none bottom-full translate-y-1/2 left-3/4 md:-translate-y-3/4 md:translate-x-0 md:bottom-16 md:left-1/2 border-8 w-2/5 h-96 z-10"
+        style={{
+          display: isActive ? "block" : "none",
+        }}
+      />
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="space-y-6">
           {selectedVariant && (
             <Card className="overflow-hidden">
               <CardContent className="p-0 relative aspect-square">
                 <img
+                  ref={sourceRef}
                   src={`${import.meta.env.VITE_API_BASE_URL}/products/${
                     selectedVariant.images[currentImageIndex]
                   }`}
-                  alt={`${product.name} - ${selectedVariant.color}`}
+                  alt={product.name}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 flex items-center justify-between p-4">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={prevImage}
-                    className="rounded-full bg-white/80 hover:bg-white"
-                  >
-                    <ChevronLeft className="h-6 w-6" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={nextImage}
-                    className="rounded-full bg-white/80 hover:bg-white"
-                  >
-                    <ChevronRight className="h-6 w-6" />
-                  </Button>
-                </div>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={prevImage}
+                  className="absolute rounded-full bg-white/80 hover:bg-white left-0 top-80"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={nextImage}
+                  className="absolute rounded-full bg-white/80 hover:bg-white right-0 top-80"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </Button>
               </CardContent>
             </Card>
           )}
@@ -273,52 +353,23 @@ function ProductDetails() {
             <div>
               <h2 className="font-bold text-lg mb-2">Color</h2>
               <RadioGroup
-                defaultValue={selectedVariant?.sku}
-                onValueChange={handleVariantChange}
+                value={selectedColor}
+                onValueChange={handleColorChange}
                 className="flex flex-wrap gap-2"
               >
-                {product.variants.map((variant) => (
-                  <div key={variant.sku}>
-                    <RadioGroupItem
-                      value={variant.sku}
-                      id={`color-${variant.sku}`}
-                      className="peer sr-only"
-                    />
-                    <Label
-                      htmlFor={`color-${variant.sku}`}
-                      className="flex items-center justify-center px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-blue-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
-                    >
-                      {variant.color}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </div>
-
-            <div>
-              <h2 className="font-bold text-lg mb-2">RAM</h2>
-              <RadioGroup
-                defaultValue={selectedVariant?.ram}
-                onValueChange={(value) =>
-                  handleVariantChange(
-                    product.variants.find((v) => v.ram === value)?.sku || ""
-                  )
-                }
-                className="flex flex-wrap gap-2"
-              >
-                {Array.from(new Set(product.variants.map((v) => v.ram))).map(
-                  (ram) => (
-                    <div key={ram}>
+                {[...new Set(product.variants.map((v) => v.color))].map(
+                  (color) => (
+                    <div key={color}>
                       <RadioGroupItem
-                        value={ram}
-                        id={`ram-${ram}`}
+                        value={color}
+                        id={`color-${color}`}
                         className="peer sr-only"
                       />
                       <Label
-                        htmlFor={`ram-${ram}`}
-                        className="flex items-center justify-center px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-blue-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
+                        htmlFor={`color-${color}`}
+                        className="flex items-center justify-center px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-gray-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
                       >
-                        {ram}
+                        {color}
                       </Label>
                     </div>
                   )
@@ -327,19 +378,38 @@ function ProductDetails() {
             </div>
 
             <div>
-              <h2 className="font-bold text-lg mb-2">Internal Storage</h2>
+              <h2 className="font-bold text-lg mb-2">RAM</h2>
               <RadioGroup
-                defaultValue={selectedVariant?.storage}
-                onValueChange={(value) =>
-                  handleVariantChange(
-                    product.variants.find((v) => v.storage === value)?.sku || ""
-                  )
-                }
+                value={selectedRam}
+                onValueChange={handleRamChange}
                 className="flex flex-wrap gap-2"
               >
-                {Array.from(
-                  new Set(product.variants.map((v) => v.storage))
-                ).map((storage) => (
+                {availableRam.map((ram) => (
+                  <div key={ram}>
+                    <RadioGroupItem
+                      value={ram}
+                      id={`ram-${ram}`}
+                      className="peer sr-only"
+                    />
+                    <Label
+                      htmlFor={`ram-${ram}`}
+                      className="flex items-center justify-center px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-gray-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
+                    >
+                      {ram}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+
+            <div>
+              <h2 className="font-bold text-lg mb-2">Internal Storage</h2>
+              <RadioGroup
+                value={selectedStorage}
+                onValueChange={handleStorageChange}
+                className="flex flex-wrap gap-2"
+              >
+                {availableStorage.map((storage) => (
                   <div key={storage}>
                     <RadioGroupItem
                       value={storage}
@@ -348,7 +418,7 @@ function ProductDetails() {
                     />
                     <Label
                       htmlFor={`storage-${storage}`}
-                      className="flex items-center justify-center px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-blue-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
+                      className="flex items-center justify-center px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-gray-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
                     >
                       {storage}
                     </Label>
@@ -367,6 +437,7 @@ function ProductDetails() {
             <Button className="flex-1 bg-gray-600 hover:bg-gray-700 text-white">
               Buy Now
             </Button>
+
             <Button
               variant="outline"
               className="flex-1 border-gray-600 text-gray-600 hover:bg-blue-50"

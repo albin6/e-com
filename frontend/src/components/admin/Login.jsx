@@ -39,10 +39,6 @@ export default function Login() {
 
       // Assuming login success
       if (response?.data) {
-        localStorage.setItem(
-          "admin_access_token",
-          JSON.stringify(response?.data?.access_token)
-        );
         dispatch(setAdminDetails(response?.data?.admin));
         console.log("Admin login successful:", response?.data?.admin);
       }

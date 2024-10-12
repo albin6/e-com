@@ -21,7 +21,10 @@ import {
 } from "../controllers/brand_controller.js";
 import {
   add_new_product,
+  get_product,
   get_products_details,
+  update_product_details,
+  update_product_status,
 } from "../controllers/products_controller.js";
 import { authenticate_admin_token } from "../middleware/authenticate_admin_token.js";
 import { upload, upload_prodcuct } from "../utils/multer/multer.js";
@@ -63,6 +66,13 @@ admin_router
 
 // -------------------------------------------------------
 
+admin_router
+  .route("/products/:productId")
+  .get(authenticate_admin_token, get_product)
+  .put(authenticate_admin_token, upload_prodcuct, update_product_details)
+  .patch(authenticate_admin_token, update_product_status);
+
+// -------------------------------------------------------
 // -------------------------------------------------------
 // create admin
 admin_router.post("/create", create_admin);

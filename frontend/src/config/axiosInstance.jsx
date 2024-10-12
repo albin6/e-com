@@ -6,7 +6,7 @@ export const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use(async (config) => {
-  const access_token = JSON.stringify(localStorage.getItem("access_token"));
+  const access_token = JSON.parse(localStorage.getItem("user_access_token"));
 
   if (access_token) {
     config.headers["Authorization"] = `Bearer ${access_token}`;
@@ -16,10 +16,37 @@ axiosInstance.interceptors.request.use(async (config) => {
 });
 
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log("in axios response interceptor ===>", response);
+    if (response?.data?.access_token) {
+      localStorage.setItem(
+        "user_access_token",
+        JSON.stringify(response.data.access_token)
+      );
+      console.log("Access token set in local storage");
+    }
+    return response;
+  },
   async (error) => {
     const original_request = error.config;
 
+    if (
+      error.response.status === 403 &&
+      error.response.data.message ===
+        "Refresh token expired, please log in again." &&
+      !original_request._retry
+    ) {
+      // Clear the local storage or cookies where tokens are stored
+      localStorage.removeItem("user_access_token");
+      document.cookie("user_refresh_token=; path=/;");
+
+      // Redirect the user to the login page
+      window.location.href = "/login";
+
+      return Promise.reject(error);
+    }
+
+    // Handle other cases, like trying to refresh the access token
     if (
       error.response.status === 401 &&
       error.response.data.message === "Not authorized, token failed" &&
@@ -71,10 +98,37 @@ adminAxiosInstance.interceptors.request.use(async (config) => {
 });
 
 adminAxiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log("in axios response interceptor ===>", response);
+    if (response?.data?.access_token) {
+      localStorage.setItem(
+        "admin_access_token",
+        JSON.stringify(response.data.access_token)
+      );
+      console.log("Access token set in local storage");
+    }
+    return response;
+  },
   async (error) => {
     const original_request = error.config;
 
+    if (
+      error.response.status === 403 &&
+      error.response.data.message ===
+        "Refresh token expired, please log in again." &&
+      !original_request._retry
+    ) {
+      // Clear the local storage or cookies where tokens are stored
+      localStorage.removeItem("admin_access_token");
+      document.cookie("admin_refresh_token=; path=/;");
+
+      // Redirect the user to the login page
+      window.location.href = "/admin/login";
+
+      return Promise.reject(error);
+    }
+
+    // Handle other cases, like trying to refresh the access token
     if (
       error.response.status === 401 &&
       error.response.data.message === "Not authorized, token failed" &&
@@ -83,7 +137,7 @@ adminAxiosInstance.interceptors.response.use(
       original_request._retry = true;
 
       try {
-        const response = await adminAxiosInstance.post(
+        const response = await axiosInstance.post(
           "/api/admin/token",
           {},
           {
@@ -91,13 +145,13 @@ adminAxiosInstance.interceptors.response.use(
           }
         );
 
-        adminAxiosInstance.defaults.headers.common[
+        axiosInstance.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${response?.data?.access_token}`;
 
-        return adminAxiosInstance(original_request);
+        return axiosInstance(original_request);
       } catch (error) {
-        console.log("Admin token refresh failed:", error);
+        console.log("Error refreshing token:", error);
         return Promise.reject(error);
       }
     }

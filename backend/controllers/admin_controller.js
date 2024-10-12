@@ -114,19 +114,21 @@ export const update_user_status = AsyncHandler(async (req, res) => {
 
 // POST /api/admin/token
 export const new_access_token_generate = AsyncHandler(async (req, res) => {
-  const refresh_token = req.cookies.refresh_token;
+  const refresh_token = req.cookies.admin_refresh_token;
   if (refresh_token) {
     const stored_refresh_token = await RefreshToken.findOne({
       token: refresh_token,
     });
-    if (!stored_refresh_token) {
-      if (!(stored_refresh_token.expiresAt < new Date())) {
+    if (stored_refresh_token) {
+      if (stored_refresh_token.expiresAt > new Date()) {
         jwt.verify(
           refresh_token,
           process.env.ADMIN_JWT_REFRESH_KEY,
           (err, user) => {
             if (err) {
-              return res.sendStatus(403);
+              return res
+                .sendStatus(403)
+                .json({ message: "Token verification failed" });
             }
 
             const new_access_token = jwt.sign(
@@ -144,10 +146,10 @@ export const new_access_token_generate = AsyncHandler(async (req, res) => {
         return res.status(403).json({ message: "Refresh Token Expired" });
       }
     } else {
-      return res.status(403);
+      return res.status(403).json({ message: "Invalid refresh token" });
     }
   } else {
-    return res.status(401);
+    return res.status(401).json({ message: "No refresh token provided" });
   }
 });
 

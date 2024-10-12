@@ -13,3 +13,13 @@ export const fetchProduct = (productId) => {
     return response.data.product;
   };
 };
+
+export const fetchListingProducts = () => {
+  return async function () {
+    const response = await axiosInstance.get(
+      `/api/users/get-products-of-category/`
+    );
+    console.log(response.data.products);
+    return response.data.products;
+  };
+};

@@ -3,7 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchCategories } from "../utils/category/categoryCRUD";
 import { getBrandList } from "../utils/brand/brandCRUD";
 import { fetchProductsData } from "../utils/products/adminProductListing";
-import { fetchProductsDetails } from "../utils/products/userProductListing";
+import {
+  fetchProductOfCategory,
+  fetchProductsDetails,
+} from "../utils/products/userProductListing";
 
 export function useUserAuth() {
   const user = useSelector((state) => state.user.userInfo);
@@ -69,6 +72,15 @@ export const useProductsDataMutation = (mutationFunc) => {
   });
 };
 // --------------------------------------------------------------
+// --------------------------------------------------------------
+// for admin for getting the details of a single product
+// for single product
+export const useProductData = (queryFunc) => {
+  return useQuery({
+    queryKey: ["product"],
+    queryFn: queryFunc,
+  });
+};
 
 // --------------------------------------------------------------
 // for user products
@@ -86,6 +98,19 @@ export const useUserProductsData = () => {
 export const useUserProduct = (queryFunc) => {
   return useQuery({
     queryKey: ["singleProduct"],
+    queryFn: queryFunc,
+  });
+};
+// --------------------------------------------------------------
+
+// --------------------------------------------------------------
+
+// --------------------------------------------------------------
+// --------------------------------------------------------------
+// for user for getting the details of products of a particular category of brand
+export const useCategoryProduct = (queryFunc) => {
+  return useQuery({
+    queryKey: ["categoryProduct"],
     queryFn: queryFunc,
   });
 };

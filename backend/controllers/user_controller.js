@@ -231,36 +231,38 @@ export const logout = AsyncHandler(async (req, res) => {
 
 // POST /api/users/token
 export const new_access_token_generate = AsyncHandler(async (req, res) => {
-  const refresh_token = req.cookies.refresh_token;
+  const refresh_token = req.cookies.user_refresh_token;
+  console.log(refresh_token);
   if (!refresh_token) {
-    return res.status(401);
+    return res.status(401).json({ message: "No refresh token provided" });
   }
 
   const stored_refresh_token = await RefreshToken.findOne({
     token: refresh_token,
   });
-  if (!stored_refresh_token) {
-    if (!(stored_refresh_token.expiresAt < new Date())) {
-      // verify the refresh token and give a new access token
+
+  if (stored_refresh_token) {
+    if (stored_refresh_token.expiresAt > new Date()) {
       jwt.verify(refresh_token, process.env.JWT_REFRESH_KEY, (err, user) => {
         if (err) {
-          return res.sendStatus(403);
+          return res.status(403).json({ message: "Token verification failed" });
         }
 
         const new_access_token = jwt.sign(
           { id: user.id, email: user.email },
           process.env.JWT_ACCESS_KEY,
-          {
-            expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION,
-          }
+          { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION }
         );
-        res.json({ access_token: new_access_token });
+
+        return res.json({ access_token: new_access_token });
       });
     } else {
       await RefreshToken.deleteOne({ token: refresh_token });
-      return res.status(403).json({ message: "Refresh Token Expired" });
+      return res
+        .status(403)
+        .json({ message: "Refresh token expired, please log in again." });
     }
   } else {
-    return res.status(403);
+    return res.status(403).json({ message: "Invalid refresh token" });
   }
 });

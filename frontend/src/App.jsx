@@ -25,6 +25,9 @@ function AppLayout() {
   return (
     <Router>
       <Routes>
+        {/* --------------------------------------------------- */}
+        {/* --------------------  users     ------------------- */}
+        {/* --------------------------------------------------- */}
         <Route path="/" element={<Homepage />} />
         <Route
           path="/login"
@@ -45,7 +48,7 @@ function AppLayout() {
         <Route path="/users/forgot-password" element={<ForgotPassword />} />
         <Route path="/users/reset-password/:id" element={<NewPassword />} />
         <Route
-          path="/products/:id"
+          path="/product/:id"
           element={
             <RequireAuthentication>
               <ProductDetailsPage />
@@ -60,6 +63,9 @@ function AppLayout() {
             </RequireAuthentication>
           }
         />
+        {/* --------------------------------------------------- */}
+        {/* --------------------   admin    ------------------- */}
+        {/* --------------------------------------------------- */}
         <Route
           path="/admin"
           element={admin ? <AdminDashboard /> : <AdminLogin />}
@@ -97,7 +103,7 @@ function AppLayout() {
           }
         />
         <Route
-          path="/admin/products/edit-product"
+          path="/admin/products/edit-product/:productId"
           element={
             <RequireAuth>
               <EditProduct />

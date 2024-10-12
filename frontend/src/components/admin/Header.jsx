@@ -30,7 +30,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center flex-1">
             <div className="max-w-lg w-full lg:max-w-xs">
-              <label htmlFor="search" className="sr-only">
+              {/* <label htmlFor="search" className="sr-only">
                 Search
               </label>
               <div className="relative">
@@ -44,7 +44,7 @@ export default function Header() {
                   placeholder="Search"
                   type="search"
                 />
-              </div>
+              </div> */}
             </div>
           </div>
           <div className="ml-4 flex items-center md:ml-6">
