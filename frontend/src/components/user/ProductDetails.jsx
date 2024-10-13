@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useUserProduct } from "../../hooks/CustomHooks";
-import { fetchProduct } from "../../utils/products/userProductListing";
+import { useUserProduct, useUserProductsData } from "../../hooks/CustomHooks";
+import {
+  fetchProduct,
+  fetchProductsDetails,
+} from "../../utils/products/userProductListing";
 import {
   Heart,
   Share2,
@@ -20,6 +23,8 @@ import {
 } from "../ui/ui-components";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { useMouseOverZoom } from "../../hooks/useMouseOverZoom";
+import ProductReviews from "./ProductReview";
+import ProductCard from "./ProductCard";
 
 // Corrected useMouseOverZoom hook
 
@@ -32,6 +37,16 @@ function ProductDetails() {
   const [availableRam, setAvailableRam] = useState([]);
   const [availableStorage, setAvailableStorage] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [products, setProducts] = useState([]);
+
+  const { data } = useUserProductsData(fetchProductsDetails);
+  useEffect(() => {
+    try {
+      setProducts(data?.products || []);
+    } catch (error) {
+      console.error("Error setting data:", error);
+    }
+  }, [data]);
 
   useEffect(() => {
     if (product && product.variants.length > 0) {
@@ -247,14 +262,14 @@ function ProductDetails() {
             </h1>
           </div>
           <div>
-            {selectedVariant && selectedVariant?.stock == 0 && (
+            {(selectedVariant && selectedVariant?.stock == 0 && (
               <p className="text-lg text-red-600">Stock out!!!</p>
-            )}
-            {selectedVariant && selectedVariant?.stock <= 10 && (
-              <p className="text-lg text-red-600">
-                Only {selectedVariant?.stock} left!!!
-              </p>
-            )}
+            )) ||
+              (selectedVariant && selectedVariant?.stock <= 10 && (
+                <p className="text-lg text-red-600">
+                  Only {selectedVariant?.stock} left!!!
+                </p>
+              ))}
             {selectedVariant && selectedVariant?.stock > 10 && (
               <p className="text-lg text-green-600">
                 {selectedVariant?.stock} left
@@ -474,7 +489,7 @@ function ProductDetails() {
           </div>
 
           <div>
-            <h2 className="font-bold text-lg mb-4">Customer Reviews</h2>
+            {/* <h2 className="font-bold text-lg mb-4">Customer Reviews</h2>
             <div className="space-y-4">
               {product.reviews.map((review, index) => (
                 <Card key={index}>
@@ -501,10 +516,32 @@ function ProductDetails() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
+            </div> */}
+            <ProductReviews />
           </div>
         </div>
       </div>
+      <section className="py-8 sm:py-12 md:py-16 px-4 md:px-8 bg-gray-50">
+        <Link to="/products/list">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">
+              Related Products...
+            </h2>
+            <Button
+              variant="outline"
+              className="border-gray-300 bg-gray-800 text-white hover:bg-gray-700"
+            >
+              View All
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 sm:gap-8">
+            {products &&
+              products.map((product) => (
+                <ProductCard key={product._id} product={product} />
+              ))}
+          </div>
+        </Link>
+      </section>
     </div>
   );
 }

@@ -22,7 +22,7 @@ const GoogleAuth = ({ setError }) => {
       // Handle response (you can save tokens or user data if needed)
       console.log("Backend response:", response.data);
       localStorage.setItem(
-        "access_token",
+        "user_access_token",
         JSON.stringify(response?.data?.access_token)
       );
       dispatch(setUserDetails(response.data.user)); // Store user details in Redux

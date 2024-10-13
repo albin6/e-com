@@ -2,8 +2,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import fetchUsers from "../../utils/fetchUsers";
 import { adminAxiosInstance } from "../../config/axiosInstance";
 import AdminBlockUserModal from "./AdminBlockUserModal";
+import { useDispatch } from "react-redux";
+import { logoutUser } from "../../redux/Slices/userSlice";
+import { clearCookie } from "../../utils/clearCookie/clearCookie";
 
 export default function UserListing() {
+  const dispatch = useDispatch();
   const [usersList, setUsersList] = useState([]);
   const [filteredUserList, setFilteredUserList] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,6 +43,12 @@ export default function UserListing() {
 
       // Update the list of users in the state
       const updatedUserData = response.data.updated_user_data;
+
+      if (updatedUserData.is_blocked) {
+        dispatch(logoutUser());
+        localStorage.removeItem("user_access_token");
+        clearCookie("user_refresh_token");
+      }
 
       setUsersList((prevUsersList) => {
         return prevUsersList.map((user) =>

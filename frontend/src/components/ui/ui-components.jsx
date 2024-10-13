@@ -1,7 +1,54 @@
 import { Link } from "react-router-dom";
 
 import React, { createContext, useContext, useState, useId } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Star } from "lucide-react";
+
+export const StarRating = ({ rating }) => {
+  return (
+    <div className="flex">
+      {[...Array(5)].map((_, index) => (
+        <Star
+          key={index}
+          className={`w-5 h-5 ${
+            index < rating ? "text-yellow-400 fill-current" : "text-gray-300"
+          }`}
+        />
+      ))}
+    </div>
+  );
+};
+
+export const Alert = ({
+  children,
+  variant = "default",
+  className = "",
+  ...props
+}) => {
+  const baseStyles = "p-4 rounded-lg border";
+  const variantStyles = {
+    default: "bg-gray-100 border-gray-200 text-gray-800",
+    destructive: "bg-red-100 border-red-200 text-red-800",
+    success: "bg-green-100 border-green-200 text-green-800",
+  };
+
+  return (
+    <div
+      role="alert"
+      className={`${baseStyles} ${variantStyles[variant]} ${className}`}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
+
+export const AlertDescription = ({ children, className = "", ...props }) => {
+  return (
+    <div className={`text-sm mt-2 ${className}`} {...props}>
+      {children}
+    </div>
+  );
+};
 
 const SelectContext = createContext(null);
 

@@ -152,6 +152,26 @@ export const send_otp = AsyncHandler(async (req, res) => {
 
       send_verification_email(data.email, otp);
       res.json({ success: true, message: "OTP sent successfully" });
+
+      let intervalId;
+
+      const deleteExpiredOTPs = async () => {
+        const now = new Date();
+        const result = await OTP.deleteMany({
+          createdAt: { $lte: new Date(now.getTime() - 60 * 1000) }, // 1 minute ago
+        });
+
+        // If no OTPs were deleted, stop the interval
+        if (result.deletedCount === 0) {
+          clearInterval(intervalId);
+          console.log("No expired OTPs found. Stopping the interval.");
+        } else {
+          console.log(`${result.deletedCount} expired OTP(s) deleted.`);
+        }
+      };
+
+      // Start the interval when needed
+      intervalId = setInterval(deleteExpiredOTPs, 5000);
     } else {
       return res
         .status(404)
@@ -169,6 +189,26 @@ export const send_otp = AsyncHandler(async (req, res) => {
 
       send_verification_email(data.email, otp);
       res.json({ success: true, message: "OTP sent successfully" });
+
+      let intervalId;
+
+      const deleteExpiredOTPs = async () => {
+        const now = new Date();
+        const result = await OTP.deleteMany({
+          createdAt: { $lte: new Date(now.getTime() - 60 * 1000) }, // 1 minute ago
+        });
+
+        // If no OTPs were deleted, stop the interval
+        if (result.deletedCount === 0) {
+          clearInterval(intervalId);
+          console.log("No expired OTPs found. Stopping the interval.");
+        } else {
+          console.log(`${result.deletedCount} expired OTP(s) deleted.`);
+        }
+      };
+
+      // Start the interval when needed
+      intervalId = setInterval(deleteExpiredOTPs, 5000);
     } else {
       return res
         .status(409)

@@ -282,7 +282,7 @@ export default function ProductListing() {
             {products.map((product) => (
               <div
                 key={product._id}
-                className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col cursor-pointer"
+                className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col cursor-pointer transition-transform duration-300 hover:scale-105"
                 onClick={() => navigate(`/product/${product._id}`)}
               >
                 <div className="relative w-full h-56 flex justify-center py-3 bg-gray-800">

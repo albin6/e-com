@@ -41,8 +41,8 @@ export const useMouseOverZoom = (
     return {
       left: x - radius,
       top: y - radius,
-      width: radius * 2,
-      height: radius * 2,
+      width: radius * 3,
+      height: radius * 3,
     };
   }, [x, y, radius]);
 

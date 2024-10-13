@@ -77,7 +77,6 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Flagship Phones */}
         <section className="py-8 sm:py-12 md:py-16 px-4 md:px-8 bg-gray-50">
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">
