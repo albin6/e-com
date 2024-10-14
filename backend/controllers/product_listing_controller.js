@@ -196,19 +196,19 @@ export const get_listing_products_details = AsyncHandler(async (req, res) => {
     const sort = req.query.sort || "newest";
     const skip = (page - 1) * limit;
 
-    let brand;
-    if (req.query.brand) {
-      brand = await Brand.findOne({ name: { $in: req.query.brand } });
-      console.log("Found brand:", brand);
-      const res = await Product.findOne({ brand: brand._id });
-      console.log(res);
-    }
-
     // Add filtering
     const filter = { is_active: true };
-    if (brand) {
-      filter["brand"] = brand._id; // Safe access
+
+    if (req.query.brand) {
+      const brandNames = req.query.brand.split(",");
+      const brands = await Brand.find({ name: { $in: brandNames } });
+      console.log("Found brands:", brands);
+
+      if (brands.length > 0) {
+        filter["brand"] = { $in: brands.map((brand) => brand._id) };
+      }
     }
+
     if (req.query.os) {
       filter["specifications.os"] = { $in: req.query.os.split(",") };
     }
