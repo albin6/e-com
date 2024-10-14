@@ -42,6 +42,8 @@ export default function ProductForm() {
     handleSubmit,
     reset,
     formState: { errors },
+    setError,
+    clearErrors,
   } = useForm({
     defaultValues: {
       name: "",
@@ -108,6 +110,15 @@ export default function ProductForm() {
       ...newImages,
     ];
 
+    if (updatedVariants[variantIndex].images.length >= 3) {
+      clearErrors(`variants.${variantIndex}.images`);
+    } else {
+      setError(`variants.${variantIndex}.images`, {
+        type: "manual",
+        message: "At least 3 images are required",
+      });
+    }
+
     reset({
       ...control._formValues,
       variants: updatedVariants,
@@ -162,6 +173,20 @@ export default function ProductForm() {
   };
 
   const onSubmit = (data) => {
+    const isValid = data.variants.every(
+      (variant) => variant.images.length >= 3
+    );
+    if (!isValid) {
+      data.variants.forEach((variant, index) => {
+        if (variant.images.length < 3) {
+          setError(`variants.${index}.images`, {
+            type: "manual",
+            message: "At least 3 images are required",
+          });
+        }
+      });
+      return;
+    }
     console.log(data);
     addProduct(data);
     navigate("/admin/products");
@@ -442,6 +467,11 @@ export default function ProductForm() {
                         accept="image/*"
                         className="mt-2"
                       />
+                      {errors.variants?.[variantIndex]?.images && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.variants[variantIndex].images.message}
+                        </p>
+                      )}
                     </div>
                     <Button
                       type="button"
