@@ -31,8 +31,8 @@ export const add_product_to_cart = AsyncHandler(async (req, res) => {
   console.log("in add_product_to_cart");
   try {
     const user_id = req.user.id;
-    const { sku } = req.body.selectedVariant;
-    const { price, discount } = req.body.product;
+    const { sku, price } = req.body.selectedVariant;
+    const { discount } = req.body.product;
     const quantity = 1;
 
     const discountAmount = (price * discount) / 100;
