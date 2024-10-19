@@ -65,12 +65,14 @@ export const get_all_products_details = AsyncHandler(async (req, res) => {
 
   try {
     // Fetch all products with populated category and brand details
-    const products = await Product.find({ is_active: true })
+    const products_data = await Product.find({ is_active: true })
       .populate("category")
       .populate("brand");
 
+    const products = products_data.filter((product) => product.category.status);
+
     // Fetch all categories
-    const categories = await Category.find();
+    const categories = await Category.find({ status: true });
     if (!categories) {
       return res
         .status(500)
@@ -78,7 +80,7 @@ export const get_all_products_details = AsyncHandler(async (req, res) => {
     }
 
     // Fetch all brands
-    const brands = await Brand.find();
+    const brands = await Brand.find({ status: true });
     if (!brands) {
       return res
         .status(500)

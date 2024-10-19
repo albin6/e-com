@@ -272,7 +272,7 @@ export const logout = AsyncHandler(async (req, res) => {
 // POST /api/users/token
 export const new_access_token_generate = AsyncHandler(async (req, res) => {
   const refresh_token = req.cookies.user_refresh_token;
-  console.log(refresh_token);
+  console.log("ithaa token ==>", refresh_token);
 
   if (!refresh_token) {
     return res.status(401).json({ message: "No refresh token provided" });

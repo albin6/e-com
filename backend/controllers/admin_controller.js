@@ -145,12 +145,12 @@ export const new_access_token_generate = AsyncHandler(async (req, res) => {
     console.log("Decoded refresh token:", decoded);
 
     // Verify the token
-    const user = jwt.verify(refresh_token, process.env.ADMIN_JWT_REFRESH_KEY);
+    const user = jwt.verify(refresh_token, process.env.JWT_REFRESH_KEY);
     console.log("User after verifying refresh token:", user);
 
     const new_access_token = jwt.sign(
       { id: user.id, email: user.email },
-      process.env.ADMIN_JWT_ACCESS_KEY,
+      process.env.JWT_ACCESS_KEY,
       { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION }
     );
 
@@ -184,6 +184,6 @@ export const create_admin = AsyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: "Login Success",
+    message: "Registeration Success",
   });
 });

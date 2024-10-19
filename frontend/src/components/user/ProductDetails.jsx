@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useUserProduct, useUserProductsData } from "../../hooks/CustomHooks";
 import {
   fetchProduct,
@@ -23,12 +23,15 @@ import {
 } from "../ui/ui-components";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { useMouseOverZoom } from "../../hooks/useMouseOverZoom";
-import ProductReviews from "./ProductReview";
 import ProductCard from "./ProductCard";
+import { axiosInstance } from "../../config/axiosInstance";
+import ReviewRating from "./ReviewRating";
+import { fetchProductExistence } from "../../utils/util-func/fetchProductExistence";
 
 // Corrected useMouseOverZoom hook
 
 function ProductDetails() {
+  const navigate = useNavigate();
   const { id } = useParams();
   const { data: product, isLoading, error } = useUserProduct(fetchProduct(id));
   const [selectedColor, setSelectedColor] = useState("");
@@ -38,6 +41,7 @@ function ProductDetails() {
   const [availableStorage, setAvailableStorage] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [products, setProducts] = useState([]);
+  const [isProductExists, setIsProductExists] = useState(false);
 
   const { data } = useUserProductsData(fetchProductsDetails);
   useEffect(() => {
@@ -99,7 +103,7 @@ function ProductDetails() {
   };
 
   const getSelectedVariant = () => {
-    return product.variants.find(
+    return product?.variants.find(
       (v) =>
         v.color === selectedColor &&
         v.ram === selectedRam &&
@@ -127,6 +131,20 @@ function ProductDetails() {
     }
   };
 
+  const addProductToCart = async (selectedVariant) => {
+    try {
+      console.log(selectedVariant);
+      const response = await axiosInstance.post("/api/users/cart", {
+        selectedVariant,
+        product,
+      });
+      console.log("product added to cart", response);
+      setIsProductExists(true);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const sourceRef = useRef(null);
   const targetRef = useRef(null);
   const cursorRef = useRef(null);
@@ -147,6 +165,36 @@ function ProductDetails() {
     }
   }, []);
 
+  const addToWishlist = (currentVariant) => {
+    console.log("in add to wishlist=>", product);
+    console.log(currentVariant);
+  };
+
+  const checkAddToCart = () => {
+    if (isProductExists) {
+      navigate("/cart");
+    } else {
+      addProductToCart(selectedVariant);
+    }
+  };
+
+  const selectedVariant = getSelectedVariant();
+  const averageRating =
+    product?.reviews.reduce((acc, review) => acc + review.rating, 0) /
+    product?.reviews.length;
+  console.log(selectedVariant);
+
+  useEffect(() => {
+    const response = fetchProductExistence(selectedVariant, product?._id);
+    response.then((data) => {
+      if (data) {
+        setIsProductExists(true);
+      } else {
+        setIsProductExists(false);
+      }
+    });
+  }, [selectedVariant, product?._id]);
+
   if (isLoading)
     return (
       <div className="flex items-center justify-center h-screen">
@@ -165,12 +213,6 @@ function ProductDetails() {
         No product found
       </div>
     );
-
-  const selectedVariant = getSelectedVariant();
-  const averageRating =
-    product.reviews.reduce((acc, review) => acc + review.rating, 0) /
-    product.reviews.length;
-  console.log(selectedVariant);
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-4 md:p-8">
       <nav className="mb-6 ml-44">
@@ -300,7 +342,10 @@ function ProductDetails() {
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" size="icon">
-                <Heart className="h-6 w-6" />
+                <Heart
+                  className="h-6 w-6"
+                  onClick={() => addToWishlist(selectedVariant)}
+                />
               </Button>
               <Button variant="ghost" size="icon">
                 <Share2 className="h-6 w-6" />
@@ -479,46 +524,17 @@ function ProductDetails() {
             </Button>
 
             <Button
+              onClick={checkAddToCart}
               variant="outline"
               className={`flex-1 border-gray-600 text-gray-600 hover:bg-blue-50 ${
                 selectedVariant?.stock == 0 ? "cursor-not-allowed" : ""
               }`}
             >
-              Add to Cart
+              {isProductExists ? "Goto Cart" : "Add to Cart"}
             </Button>
           </div>
 
-          <div>
-            {/* <h2 className="font-bold text-lg mb-4">Customer Reviews</h2>
-            <div className="space-y-4">
-              {product.reviews.map((review, index) => (
-                <Card key={index}>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-semibold">{review.name}</span>
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < review.rating
-                                ? "text-yellow-400 fill-current"
-                                : "text-gray-300"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600">{review.comment}</p>
-                    <p className="text-xs text-gray-500 mt-2">
-                      {new Date(review.created_at).toLocaleDateString()}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div> */}
-            <ProductReviews />
-          </div>
+          <ReviewRating />
         </div>
       </div>
       <section className="py-8 sm:py-12 md:py-16 px-4 md:px-8 bg-gray-50">

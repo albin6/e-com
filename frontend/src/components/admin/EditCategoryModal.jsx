@@ -8,6 +8,8 @@ function EditCategoryModal({ category, onUpdate, onClose }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const data = { ...category, title, description, status };
+    console.log(data);
     onUpdate({ ...category, title, description, status });
   };
 
@@ -40,7 +42,11 @@ function EditCategoryModal({ category, onUpdate, onClose }) {
             <span>Status</span>
             <Switch
               checked={status}
-              onChange={() => setStatus((prev) => !prev)}
+              onChange={() => {
+                console.log("previous", status);
+                setStatus((prev) => !prev);
+                console.log("after", status);
+              }}
               className={`${
                 status ? "bg-gray-800" : "bg-gray-200"
               } relative inline-flex h-6 w-11 items-center rounded-full`}

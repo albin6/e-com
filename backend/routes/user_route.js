@@ -20,6 +20,24 @@ import {
 import { authenticate_user_token } from "../middleware/authenticate_user_token.js";
 import { get_all_categories } from "../controllers/category_controller.js";
 import { get_all_brands } from "../controllers/brand_controller.js";
+import {
+  add_new_address,
+  delete_address,
+  get_all_addresses,
+  update_address,
+} from "../controllers/address_controller.js";
+import { normalizeUserMiddleware } from "../middleware/normalize_user_middleware.js";
+import {
+  get_user_info,
+  update_user_info,
+} from "../controllers/profile_controller.js";
+import {
+  add_product_to_cart,
+  check_product_variant_in_cart,
+  delete_product,
+  get_cart_products,
+  update_product_quantity,
+} from "../controllers/cart_controller.js";
 const user_router = express.Router();
 
 user_router.post("/signup", register);
@@ -62,6 +80,58 @@ user_router.get(
   get_all_categories
 );
 user_router.get("/get-all-brands", authenticate_user_token, get_all_brands);
+
+// ----------------------------------------------------
+// ----------------------------------------------------
+
+user_router.get(
+  "/address",
+  authenticate_user_token,
+  normalizeUserMiddleware,
+  get_all_addresses
+);
+user_router.post(
+  "/address",
+  authenticate_user_token,
+  normalizeUserMiddleware,
+  add_new_address
+);
+user_router
+  .route("/address/:addressId")
+  .put(authenticate_user_token, normalizeUserMiddleware, update_address)
+  .delete(authenticate_user_token, normalizeUserMiddleware, delete_address);
+
+// ----------------------------------------------------
+// ----------------------------------------------------
+
+user_router
+  .route("/profile")
+  .get(authenticate_user_token, normalizeUserMiddleware, get_user_info)
+  .put(authenticate_user_token, normalizeUserMiddleware, update_user_info);
+
+// ----------------------------------------------------
+// ----------------------------------------------------
+
+user_router.get(
+  "/cart-data",
+  authenticate_user_token,
+  normalizeUserMiddleware,
+  check_product_variant_in_cart
+);
+
+user_router
+  .route("/cart")
+  .get(authenticate_user_token, normalizeUserMiddleware, get_cart_products)
+  .post(authenticate_user_token, normalizeUserMiddleware, add_product_to_cart);
+
+user_router
+  .route("/cart/:productSKU")
+  .patch(
+    authenticate_user_token,
+    normalizeUserMiddleware,
+    update_product_quantity
+  )
+  .delete(authenticate_user_token, normalizeUserMiddleware, delete_product);
 
 // ----------------------------------------------------
 // ----------------------------------------------------

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Switch } from "@headlessui/react";
 import { useCategoryListMutation } from "../../hooks/CustomHooks";
 import { submitCategoryForm } from "../../utils/category/categoryCRUD";
@@ -8,6 +8,7 @@ function AddCategoryForm() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState(true);
+  const [error, setError] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -16,9 +17,20 @@ function AddCategoryForm() {
     setDescription("");
   };
 
+  useEffect(() => {
+    if (mutation.isError) {
+      console.log("Errorrrrrrrr", mutation.error);
+      console.log(mutation.error.response.data.message);
+      setError(mutation.error.response.data.message);
+    }
+  }, [mutation.isError, mutation.error]);
+
   return (
     <form onSubmit={handleSubmit} className="mb-4 py-4 bg-gray-100 rounded">
-      <h2 className="text-xl font-semibold mb-2">Add New Category</h2>
+      <div className="flex justify-between">
+        <h2 className="text-xl font-semibold mb-2">Add New Category</h2>
+        {error && <span className="text-red-500 text-base">{error}</span>}
+      </div>
       <div className="flex items-center space-x-2">
         <input
           type="text"

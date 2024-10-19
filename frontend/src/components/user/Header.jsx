@@ -73,13 +73,13 @@ function Header() {
           <IconButton
             icon={<Heart className="h-6 w-6" />}
             label="Wishlist"
-            onClick={() => console.log("Wishlist clicked")}
+            onClick={() => navigate("/wishlist")}
           />
 
           <IconButton
             icon={<ShoppingCart className="h-6 w-6" />}
             label="Cart"
-            onClick={() => console.log("Cart clicked")}
+            onClick={() => navigate("/cart")}
           />
 
           {user ? (
@@ -95,6 +95,7 @@ function Header() {
                     className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={() => {
                       console.log("My Account clicked");
+                      navigate("/profile");
                       setIsUserMenuOpen(false);
                     }}
                   >
@@ -113,6 +114,7 @@ function Header() {
                     className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={() => {
                       console.log("My Cart clicked");
+                      navigate("/cart");
                       setIsUserMenuOpen(false);
                     }}
                   >

@@ -3,6 +3,47 @@ import { Link } from "react-router-dom";
 import React, { createContext, useContext, useState, useId } from "react";
 import { ChevronDown, Star } from "lucide-react";
 
+import { X } from "lucide-react";
+
+export const Dialog = ({ open, onOpenChange, children }) => {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
+      <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full m-4">
+        <button
+          onClick={() => onOpenChange(false)}
+          className="absolute top-2 right-2 text-gray-400 hover:text-gray-500"
+          aria-label="Close"
+        >
+          <X className="h-6 w-6" />
+        </button>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+export const DialogContent = ({ children }) => {
+  return <div className="p-6">{children}</div>;
+};
+
+export const DialogHeader = ({ children }) => {
+  return <div className="mb-4">{children}</div>;
+};
+
+export const DialogTitle = ({ children }) => {
+  return <h2 className="text-lg font-semibold text-gray-900">{children}</h2>;
+};
+
+export const DialogTrigger = ({ children, ...props }) => {
+  return (
+    <Dialog.Trigger asChild {...props}>
+      {children}
+    </Dialog.Trigger>
+  );
+};
+
 export const StarRating = ({ rating }) => {
   return (
     <div className="flex">

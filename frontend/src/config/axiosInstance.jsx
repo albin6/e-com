@@ -31,7 +31,7 @@ axiosInstance.interceptors.response.use(
     const original_request = error.config;
 
     if (
-      error.response.status === 403 &&
+      error.response?.status === 403 &&
       error.response.data.message ===
         "Refresh token expired, please log in again." &&
       !original_request._retry
@@ -50,7 +50,7 @@ axiosInstance.interceptors.response.use(
 
     // Handle other cases, like trying to refresh the access token
     if (
-      error.response.status === 401 &&
+      error.response?.status === 401 &&
       error.response.data.message === "Not authorized, token failed" &&
       !original_request._retry
     ) {
@@ -75,6 +75,19 @@ axiosInstance.interceptors.response.use(
         console.log("Error refreshing token:", error);
         return Promise.reject(error);
       }
+    } else if (
+      error.response?.status === 401 &&
+      error.response.data.message === "No refresh token provided" &&
+      !original_request._retry
+    ) {
+      // Clear the local storage or cookies where tokens are stored
+      localStorage.removeItem("user_access_token");
+      localStorage.removeItem("userInfo");
+
+      // Redirect the user to the login page
+      window.location.href = "/login";
+
+      return Promise.reject(error);
     }
 
     return Promise.reject(error);
@@ -116,7 +129,7 @@ adminAxiosInstance.interceptors.response.use(
     const original_request = error.config;
 
     if (
-      error.response.status === 403 &&
+      error.response?.status === 403 &&
       error.response.data.message ===
         "Refresh token expired, please log in again." &&
       !original_request._retry
@@ -128,14 +141,14 @@ adminAxiosInstance.interceptors.response.use(
         "admin_access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;"; // Correct way to clear the cookie
 
       // Redirect the user to the login page
-      window.location.href = "/admin/login";
+      window.location.href = "/admin";
 
       return Promise.reject(error);
     }
 
     // Handle other cases, like trying to refresh the access token
     if (
-      error.response.status === 401 &&
+      error.response?.status === 401 &&
       error.response.data.message === "Not authorized, token failed" &&
       !original_request._retry
     ) {
@@ -159,6 +172,19 @@ adminAxiosInstance.interceptors.response.use(
         console.log("Error refreshing token:", error);
         return Promise.reject(error);
       }
+    } else if (
+      error.response?.status === 401 &&
+      error.response.data.message === "No refresh token provided" &&
+      !original_request._retry
+    ) {
+      // Clear the local storage or cookies where tokens are stored
+      localStorage.removeItem("admin_access_token");
+      localStorage.removeItem("adminInfo");
+
+      // Redirect the user to the login page
+      window.location.href = "/admin";
+
+      return Promise.reject(error);
     }
 
     return Promise.reject(error);

@@ -21,130 +21,184 @@ import RequireAuthentication from "./private/user/RequireAuthentication";
 import ProductListingPage from "./pages/user/ProductListingPage";
 import CategoryListingPage from "./pages/user/CategoryListingPage";
 import BrandListingPage from "./pages/user/BrandListingPage";
+import WishlistPage from "./pages/user/WishlistPage";
+import UserProfile from "./pages/user/UserProfile";
+import OrderDetailsPage from "./pages/user/OrderDetailsPage";
+import ResetPassword from "./pages/user/ResetPassword";
+import CartPage from "./pages/user/CartPage";
+import CheckoutPage from "./pages/user/CheckoutPage";
 
 function AppLayout() {
   const admin = useSelector((state) => state.admin.adminInfo);
   return (
-    <Router>
-      <Routes>
-        {/* --------------------------------------------------- */}
-        {/* --------------------  users     ------------------- */}
-        {/* --------------------------------------------------- */}
-        <Route path="/" element={<Homepage />} />
-        <Route
-          path="/login"
-          element={
-            <RequireNoAuthentication>
-              <LoginPage />
-            </RequireNoAuthentication>
-          }
-        />
-        <Route
-          path="/signup"
-          element={
-            <RequireNoAuthentication>
-              <SignupPage />
-            </RequireNoAuthentication>
-          }
-        />
-        <Route path="/users/forgot-password" element={<ForgotPassword />} />
-        <Route path="/users/reset-password/:id" element={<NewPassword />} />
-        <Route
-          path="/product/:id"
-          element={
-            <RequireAuthentication>
-              <ProductDetailsPage />
-            </RequireAuthentication>
-          }
-        />
-        <Route
-          path="/products/categories/:categoryId"
-          element={
-            <RequireAuthentication>
-              <CategoryListingPage />
-            </RequireAuthentication>
-          }
-        />
-        <Route
-          path="/products/brands/:brandId"
-          element={
-            <RequireAuthentication>
-              <BrandListingPage></BrandListingPage>
-            </RequireAuthentication>
-          }
-        />
-        <Route
-          path="/products/list"
-          element={
-            <RequireAuthentication>
-              <ProductListingPage />
-            </RequireAuthentication>
-          }
-        />
-        {/* --------------------------------------------------- */}
-        {/* --------------------   admin    ------------------- */}
-        {/* --------------------------------------------------- */}
-        <Route
-          path="/admin"
-          element={admin ? <AdminDashboard /> : <AdminLogin />}
-        />
-        <Route
-          path="/admin/users"
-          element={
-            <RequireAuth>
-              <UsersList />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/admin/category"
-          element={
-            <RequireAuth>
-              <Category />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/admin/products"
-          element={
-            <RequireAuth>
-              <ProductList />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/admin/products/add-product"
-          element={
-            <RequireAuth>
-              <AddProduct />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/admin/products/edit-product/:productId"
-          element={
-            <RequireAuth>
-              <EditProduct />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/admin/brand"
-          element={
-            <RequireAuth>
-              <Brand />
-            </RequireAuth>
-          }
-        />
-      </Routes>
-    </Router>
+    <Routes>
+      {/* --------------------------------------------------- */}
+      {/* --------------------  users     ------------------- */}
+      {/* --------------------------------------------------- */}
+      <Route path="/" element={<Homepage />} />
+      <Route
+        path="/login"
+        element={
+          <RequireNoAuthentication>
+            <LoginPage />
+          </RequireNoAuthentication>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <RequireNoAuthentication>
+            <SignupPage />
+          </RequireNoAuthentication>
+        }
+      />
+      <Route path="/users/forgot-password" element={<ForgotPassword />} />
+      <Route path="/users/reset-password/:id" element={<NewPassword />} />
+      <Route
+        path="/product/:id"
+        element={
+          <RequireAuthentication>
+            <ProductDetailsPage />
+          </RequireAuthentication>
+        }
+      />
+      <Route
+        path="/products/categories/:categoryId"
+        element={
+          <RequireAuthentication>
+            <CategoryListingPage />
+          </RequireAuthentication>
+        }
+      />
+      <Route
+        path="/products/brands/:brandId"
+        element={
+          <RequireAuthentication>
+            <BrandListingPage />
+          </RequireAuthentication>
+        }
+      />
+      <Route
+        path="/products/list"
+        element={
+          <RequireAuthentication>
+            <ProductListingPage />
+          </RequireAuthentication>
+        }
+      />
+      <Route
+        path="/wishlist"
+        element={
+          <RequireAuthentication>
+            <WishlistPage />
+          </RequireAuthentication>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <RequireAuthentication>
+            <UserProfile />
+          </RequireAuthentication>
+        }
+      />
+      <Route
+        path="/profile/orders/:orderId"
+        element={
+          <RequireAuthentication>
+            <OrderDetailsPage />
+          </RequireAuthentication>
+        }
+      />
+      <Route
+        path="/profile/reset-password"
+        element={
+          <RequireAuthentication>
+            <ResetPassword />
+          </RequireAuthentication>
+        }
+      />
+      <Route
+        path="/cart"
+        element={
+          <RequireAuthentication>
+            <CartPage />
+          </RequireAuthentication>
+        }
+      />
+      <Route
+        path="/checkout"
+        element={
+          <RequireAuthentication>
+            <CheckoutPage />
+          </RequireAuthentication>
+        }
+      />
+      {/* --------------------------------------------------- */}
+      {/* --------------------   admin    ------------------- */}
+      {/* --------------------------------------------------- */}
+      <Route
+        path="/admin"
+        element={admin ? <AdminDashboard /> : <AdminLogin />}
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <RequireAuth>
+            <UsersList />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin/category"
+        element={
+          <RequireAuth>
+            <Category />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin/products"
+        element={
+          <RequireAuth>
+            <ProductList />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin/products/add-product"
+        element={
+          <RequireAuth>
+            <AddProduct />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin/products/edit-product/:productId"
+        element={
+          <RequireAuth>
+            <EditProduct />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin/brand"
+        element={
+          <RequireAuth>
+            <Brand />
+          </RequireAuth>
+        }
+      />
+    </Routes>
   );
 }
 
 function App() {
   return (
     <>
-      <AppLayout />
+      <Router>
+        <AppLayout />
+      </Router>
     </>
   );
 }
