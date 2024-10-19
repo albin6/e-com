@@ -17,6 +17,12 @@ export const add_new_category = AsyncHandler(async (req, res) => {
   console.log(req.body);
   const { title, status, description } = req.body;
 
+  const is_category_exists = await Category.findOne({ title });
+
+  if (is_category_exists) {
+    return res.status(409).json({ message: "Category Already Exists" });
+  }
+
   const new_category = await Category.create({
     title,
     status,

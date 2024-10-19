@@ -15,7 +15,7 @@ export const submitCategoryForm = async (newCategory) => {
 
 export const updateCategory = async (updatedCategory) => {
   const response = await adminAxiosInstance.put(
-    "/api/admin/categories/",
+    "/api/admin/categories",
     updatedCategory
   );
   console.log("response of put request =>", response.data);
