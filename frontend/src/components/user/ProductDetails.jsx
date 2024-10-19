@@ -213,15 +213,7 @@ function ProductDetails() {
         No product found
       </div>
     );
-<<<<<<< HEAD
 
-  const selectedVariant = getSelectedVariant();
-  const averageRating =
-    product.reviews.reduce((acc, review) => acc + review.rating, 0) /
-    product.reviews.length;
-  console.log("deyyyyyyy", selectedVariant);
-=======
->>>>>>> 22fb1b4 (cart profile completed)
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-4 md:p-8">
       <nav className="mb-6 ml-44">
