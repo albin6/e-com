@@ -355,7 +355,7 @@ function ProductDetails() {
 
           <div className="bg-white p-4 rounded-lg shadow-sm">
             <span className="text-3xl font-bold text-gray-900">
-              ₹{product.price.toLocaleString()}.00
+              ₹{selectedVariant.price.toLocaleString()}.00
             </span>
             <span className="text-sm text-gray-600 ml-2">
               (Incl. all Taxes)
@@ -363,13 +363,15 @@ function ProductDetails() {
             <div className="text-sm text-gray-600 mt-1">
               <span className="line-through">
                 MRP: ₹
-                {(product.price / (1 - product.discount / 100)).toFixed(2)}
+                {(selectedVariant.price / (1 - product.discount / 100)).toFixed(
+                  2
+                )}
               </span>
               <span className="text-green-600 ml-2">
                 (Save ₹
                 {(
-                  product.price / (1 - product.discount / 100) -
-                  product.price
+                  selectedVariant.price / (1 - product.discount / 100) -
+                  selectedVariant.price
                 ).toFixed(2)}
                 , {product.discount}% off)
               </span>
