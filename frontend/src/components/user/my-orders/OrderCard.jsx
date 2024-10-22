@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-import React from "react";
-import { useNavigate } from "react-router-dom";
-
-function OrderCard({ order }) {
-  const navigate = useNavigate();
-=======
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -36,7 +29,6 @@ export default function OrderCard({ order }) {
     setShowCancelModal(false);
   };
 
->>>>>>> wishlist-cart-management
   return (
     <div className="border rounded-lg overflow-hidden shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white">
@@ -46,11 +38,8 @@ export default function OrderCard({ order }) {
         </div>
         <div>
           <span className="text-sm font-medium">Total:</span>
-<<<<<<< HEAD
-          <span className="text-sm"> ₹{order.total}</span>
-=======
+
           <span className="text-sm"> ₹{order.total.toFixed(2)}</span>
->>>>>>> wishlist-cart-management
         </div>
         <div>
           <span className="text-sm font-medium">Ship To:</span>
@@ -70,40 +59,6 @@ export default function OrderCard({ order }) {
         </button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white">
-<<<<<<< HEAD
-        <div className="md:col-span-2 flex space-x-4">
-          <div className="w-20 h-20 bg-gray-200 rounded-md overflow-hidden">
-            <img
-              src="/placeholder.svg?height=80&width=80"
-              alt="Product"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm">{order.productName}</p>
-            <p className="text-sm font-medium">Price: ₹{order.price}</p>
-            {order.returnEligible && (
-              <p className="text-xs text-red-500">{order.returnEligible}</p>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-col justify-between items-end space-y-2">
-          <div
-            className={`text-sm font-medium ${
-              order.status === "PROCESSING" ? "text-blue-600" : "text-green-600"
-            }`}
-          >
-            Status: {order.status}
-          </div>
-          <div className="space-x-2">
-            {order.status === "PROCESSING" ? (
-              <button className="px-3 py-1 text-sm text-white bg-red-500 rounded hover:bg-red-600">
-                Cancel Order
-              </button>
-            ) : (
-              <button className="px-3 py-1 text-sm text-white bg-red-500 rounded hover:bg-red-600">
-                Return
-=======
         {order &&
           order.orderItems.map((item, index) => (
             <div key={index} className="md:col-span-2 flex space-x-4">
@@ -161,7 +116,6 @@ export default function OrderCard({ order }) {
                 className="w-full sm:w-auto bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
               >
                 Cancel
->>>>>>> wishlist-cart-management
               </button>
             )}
             <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100">
@@ -170,13 +124,6 @@ export default function OrderCard({ order }) {
           </div>
         </div>
       </div>
-<<<<<<< HEAD
-    </div>
-  );
-}
-
-export default OrderCard;
-=======
 
       {showCancelModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -203,4 +150,3 @@ export default OrderCard;
     </div>
   );
 }
->>>>>>> wishlist-cart-management

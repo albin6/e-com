@@ -2,43 +2,7 @@ import React, { useState } from "react";
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
 
 const OrderListingTable = () => {
-  const [orders, setOrders] = useState([
-    {
-      id: 1,
-      customer: "John Doe",
-      date: "2023-10-17",
-      total: 199.99,
-      status: "Processing",
-    },
-    {
-      id: 2,
-      customer: "Jane Smith",
-      date: "2023-10-16",
-      total: 149.5,
-      status: "Shipped",
-    },
-    {
-      id: 3,
-      customer: "Bob Johnson",
-      date: "2023-10-15",
-      total: 299.99,
-      status: "Delivered",
-    },
-    {
-      id: 4,
-      customer: "Alice Brown",
-      date: "2023-10-14",
-      total: 79.99,
-      status: "Processing",
-    },
-    {
-      id: 5,
-      customer: "Charlie Wilson",
-      date: "2023-10-13",
-      total: 249.99,
-      status: "Cancelled",
-    },
-  ]);
+  const [orders, setOrders] = useState([]);
 
   const [sortColumn, setSortColumn] = useState("");
   const [sortDirection, setSortDirection] = useState("asc");
