@@ -28,6 +28,7 @@ import {
   updateProduct,
 } from "../../utils/products/adminProductListing";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function EditProductForm() {
   const navigate = useNavigate();
@@ -208,7 +209,13 @@ export default function EditProductForm() {
       return;
     }
     console.log(data);
-    editProduct({ id: productId, ...data });
+    editProduct(
+      { id: productId, ...data },
+      {
+        onSuccess: () =>
+          toast.success("Prodcut Update Success", { position: "top-center" }),
+      }
+    );
     navigate("/admin/products");
   };
 

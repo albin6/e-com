@@ -1,12 +1,16 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import EmailEntry from "./EmailEntry";
 import OTPVerification from "./OTPVerification";
 import NewPassword from "./NewPassword";
 import { axiosInstance } from "../../../config/axiosInstance";
 
+import { toast } from "react-toastify";
+
 export default function ForgotPasswordFlow() {
+  const navigate = useNavigate();
   const [step, setStep] = useState("email");
   const [email, setEmail] = useState("");
 
@@ -15,11 +19,20 @@ export default function ForgotPasswordFlow() {
     console.log("Sending OTP to:", submittedEmail);
     setEmail(submittedEmail);
     try {
-      const response = await axiosInstance.post("/api/users/send-otp", {
-        email: submittedEmail,
-      });
+      const response = await axiosInstance.post(
+        "/api/users/send-verification-otp",
+        {
+          email: submittedEmail,
+        }
+      );
       setStep("otp");
+      toast.success("OTP sent successfully. Please check your email.", {
+        position: "top-center",
+      });
     } catch (error) {
+      toast.error(error.response.data.message, {
+        position: "top-center",
+      });
       console.log(error);
     }
   };
@@ -36,6 +49,9 @@ export default function ForgotPasswordFlow() {
       console.log(response?.data);
       setStep("newPassword");
     } catch (error) {
+      toast.error(error.response.data.message, {
+        position: "top-center",
+      });
       console.error("Error verifying OTP:", error);
     }
   };
@@ -45,15 +61,39 @@ export default function ForgotPasswordFlow() {
     console.log("Resetting password for:", email);
     try {
       // Send the new password to the backend API
-      const response = await axiosInstance.post("/api/users/reset-password", {
-        id,
-        password,
+
+      const response = await axiosInstance.post(
+        "/api/users/reset-the-password",
+        {
+          password,
+        }
+      );
+      toast.success("Password reset successfully", {
+        position: "top-center",
       });
       setTimeout(() => navigate("/profile"), 1000);
     } catch (err) {
       console.log(err);
     }
     // Redirect to login page or show success message
+  };
+
+  const handleOTPResend = async () => {
+    try {
+      const response = await axiosInstance.post(
+        "/api/users/send-verification-otp",
+        {
+          email,
+        }
+      );
+      if (response.data.success) {
+        toast.success("OTP sent successfully. Please check your email.", {
+          position: "top-center",
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -71,7 +111,11 @@ export default function ForgotPasswordFlow() {
         </div>
         {step === "email" && <EmailEntry onSubmit={handleEmailSubmit} />}
         {step === "otp" && (
-          <OTPVerification onVerify={handleOTPVerify} email={email} />
+          <OTPVerification
+            onVerify={handleOTPVerify}
+            email={email}
+            onResendOTP={handleOTPResend}
+          />
         )}
         {step === "newPassword" && (
           <NewPassword onSubmit={handlePasswordReset} />

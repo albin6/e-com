@@ -1,6 +1,8 @@
 import React from "react";
 import { Button } from "../../ui/ui-components";
 
+import { Link } from "react-router-dom";
+
 const ProfileSidebar = ({ activeTab, setActiveTab }) => {
   return (
     <aside className="w-full md:w-64 bg-gray-50 p-6">
@@ -49,9 +51,12 @@ const ProfileSidebar = ({ activeTab, setActiveTab }) => {
             </button>
           </li>
           <li>
-            <a href="#" className="block py-2 px-4 hover:bg-gray-200 rounded">
+            <Link
+              to={"/wishlist"}
+              className="block py-2 px-4 hover:bg-gray-200 rounded"
+            >
               My Wishlist
-            </a>
+            </Link>
           </li>
           <li>
             <a href="#" className="block py-2 px-4 hover:bg-gray-200 rounded">
@@ -65,14 +70,16 @@ const ProfileSidebar = ({ activeTab, setActiveTab }) => {
           </li>
         </ul>
       </nav>
-      <div className="mt-8 space-y-2">
+
+      {/* <div className="mt-8 space-y-2">
         <Button variant="outline" className="w-full">
           Deactivate Account
         </Button>
         <Button variant="destructive" className="w-full">
           Delete Account
         </Button>
-      </div>
+
+      </div> */}
     </aside>
   );
 };

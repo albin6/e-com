@@ -8,6 +8,9 @@ import { fetchUserAddresses } from "../utils/address/addressCRUD";
 import { fetchUserInformation } from "../utils/profile/profileCRUD";
 import { getCartProducts } from "../utils/cart/cartCRUD";
 
+import { getWishlistProducts } from "../utils/wishlist/wishlistCRUD";
+import { axiosInstance } from "../config/axiosInstance";
+
 export function useUserAuth() {
   const user = useSelector((state) => state.user.userInfo);
   return user;
@@ -171,6 +174,7 @@ export const useCartProduct = () => {
 
 // --------------------------------------------------------------
 // --------------------------------------------------------------
+
 // for mutating the products in the cart
 
 export const useCartProductMutation = (mutationFunc) => {
@@ -179,6 +183,90 @@ export const useCartProductMutation = (mutationFunc) => {
     mutationFn: mutationFunc,
     onSuccess: () => {
       queryClient.invalidateQueries("cartProduct");
+    },
+  });
+};
+
+// --------------------------------------------------------------
+// --------------------------------------------------------------
+// for getting all products in wishlist
+export const useWishlistProduct = () => {
+  return useQuery({
+    queryKey: ["wishlistProduct"],
+    queryFn: getWishlistProducts,
+  });
+};
+
+// for mutating wishlist products
+export const useWishlistProductMutation = (mutationFunc) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: mutationFunc,
+    onSuccess: () => {
+      queryClient.invalidateQueries("wishlistProduct");
+    },
+  });
+};
+
+// --------------------------------------------------------------
+// --------------------------------------------------------------
+// for getting order status
+export const useOrderDetails = (queryFunc) => {
+  return useQuery({
+    queryKey: ["orders"],
+    queryFn: queryFunc,
+  });
+};
+
+// for canceling an order
+export const useOrderDetailsMutation = (mutationFunc) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: mutationFunc,
+    onSuccess: () => {
+      queryClient.invalidateQueries("orders");
+    },
+  });
+};
+
+// --------------------------------------------------------------
+// --------------------------------------------------------------
+// for getting orders
+export const useAllOrders = (queryFunc) => {
+  return useQuery({
+    queryKey: ["allOrders"],
+    queryFn: queryFunc,
+  });
+};
+
+export const useAllOrdersMutation = (mutationFunc) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: mutationFunc,
+    onSuccess: () => {
+      queryClient.invalidateQueries("allOrders");
+    },
+  });
+};
+
+// ----------------------------------------------------------
+// ----------------------------------------------------------
+
+// for getting the details of a product for direct checkout
+export const useDirectCheckoutProduct = ({ variant, productId }) => {
+  return useQuery({
+    queryKey: ["directCheckoutProduct"],
+    queryFn: async () => {
+      const response = await axiosInstance.get(
+        "/api/users/get-variant-details-of-product",
+        {
+          params: {
+            variant: variant,
+            productId: productId,
+          },
+        }
+      );
+      return response.data.cart_data;
     },
   });
 };

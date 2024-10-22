@@ -5,7 +5,7 @@ import BrandManagement from "../../components/admin/BrandManagement";
 
 function Brand() {
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex bg-gray-100">
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />

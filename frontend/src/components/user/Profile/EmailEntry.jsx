@@ -30,10 +30,11 @@ export default function EmailEntry({ onSubmit }) {
       <div>
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-gray-700"
+          className="text-sm font-medium text-gray-700 flex justify-between"
         >
           Email address
         </label>
+
         <input
           type="email"
           name="email"

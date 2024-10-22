@@ -1,11 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ProfileSidebar from "./ProfileSidebar";
 import ProfileTab from "./ProfileTab";
 import AddressBookTab from "../Address/AddressBookTab";
 import Orders from "../my-orders/Orders";
+import { axiosInstance } from "../../../config/axiosInstance";
+import { toast } from "react-toastify";
 
 const UserDetails = () => {
   const [activeTab, setActiveTab] = useState("profile");
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
+    axiosInstance
+      .get("/api/users/profile")
+      .then((response) =>
+        setUserName(
+          response.data.user_data.first_name +
+            " " +
+            response.data.user_data.last_name
+        )
+      )
+      .catch((error) => console.log(error));
+  });
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
@@ -26,7 +42,15 @@ const UserDetails = () => {
                   {activeTab === "orders" && "Manage your orders"}
                 </p>
               </div>
-              <p className="text-sm text-gray-600">Welcome! Customer Name</p>
+
+              {userName && (
+                <p className="text-sm text-gray-600">
+                  Welcome!{" "}
+                  <span className="text-gray-800 text-base font-medium">
+                    {userName}
+                  </span>
+                </p>
+              )}
             </header>
             {activeTab === "profile" && <ProfileTab />}
             {activeTab === "addresses" && <AddressBookTab />}

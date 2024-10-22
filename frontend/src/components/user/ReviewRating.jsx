@@ -2,30 +2,32 @@ import { Star, ThumbsUp, ThumbsDown, ChevronDown } from "lucide-react";
 
 export default function Component() {
   return (
-    <div className="max-w-4xl mx-auto p-4 bg-white shadow-lg rounded-lg">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <h2 className="text-2xl font-bold">Ratings & Reviews</h2>
-        <button className="mt-2 md:mt-0 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 bg-white shadow-lg rounded-lg">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-0">
+          Ratings & Reviews
+        </h2>
+        <button className="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
           Rate Product
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         <div>
           <div className="flex items-center mb-4">
-            <span className="text-5xl font-bold mr-2">4.3</span>
-            <Star className="w-8 h-8 text-yellow-400 fill-current" />
+            <span className="text-4xl sm:text-5xl font-bold mr-2">4.3</span>
+            <Star className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-400 fill-current" />
           </div>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-xs sm:text-sm text-gray-600 mb-4">
             11,815 Ratings & 725 Reviews
           </p>
           {[5, 4, 3, 2, 1].map((rating) => (
             <div key={rating} className="flex items-center mb-2">
-              <span className="w-3">{rating}</span>
-              <Star className="w-4 h-4 text-gray-400 ml-1" />
-              <div className="w-full bg-gray-200 rounded-full h-2 ml-2">
+              <span className="w-3 text-sm">{rating}</span>
+              <Star className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 ml-1" />
+              <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2 ml-2">
                 <div
-                  className="bg-green-500 h-2 rounded-full"
+                  className="bg-green-500 h-1.5 sm:h-2 rounded-full"
                   style={{
                     width: `${
                       rating === 5
@@ -39,7 +41,8 @@ export default function Component() {
                   }}
                 ></div>
               </div>
-              <span className="ml-2 text-sm text-gray-600">
+
+              <span className="ml-2 text-xs sm:text-sm text-gray-600">
                 {rating === 5
                   ? "7,720"
                   : rating === 4
@@ -57,7 +60,7 @@ export default function Component() {
         <div className="grid grid-cols-2 gap-4">
           {["Camera", "Battery", "Display", "Design"].map((feature, index) => (
             <div key={feature} className="flex flex-col items-center">
-              <div className="relative w-20 h-20">
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20">
                 <svg className="w-full h-full" viewBox="0 0 36 36">
                   <path
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -73,17 +76,20 @@ export default function Component() {
                     strokeDasharray={`${[80, 76, 88, 88][index]}, 100`}
                   />
                 </svg>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-lg font-semibold">
+
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-base sm:text-lg font-semibold">
                   {[4.0, 3.8, 4.4, 4.4][index]}
                 </div>
               </div>
-              <span className="mt-2 text-sm font-medium">{feature}</span>
+              <span className="mt-2 text-xs sm:text-sm font-medium text-center">
+                {feature}
+              </span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="mt-8 grid grid-cols-4 md:grid-cols-8 gap-2">
+      <div className="mt-6 sm:mt-8 grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
         {[...Array(8)].map((_, i) => (
           <div
             key={i}
@@ -98,7 +104,7 @@ export default function Component() {
         ))}
       </div>
 
-      <div className="mt-8 space-y-6">
+      <div className="mt-6 sm:mt-8 space-y-6">
         {[
           {
             rating: 4,
@@ -120,40 +126,43 @@ export default function Component() {
             dislikes: 43,
           },
         ].map((review, index) => (
-          <div key={index} className="border-t pt-6">
+          <div key={index} className="border-t pt-4 sm:pt-6">
             <div className="flex items-center mb-2">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-5 h-5 ${
+                  className={`w-4 h-4 sm:w-5 sm:h-5 ${
                     i < review.rating
                       ? "text-yellow-400 fill-current"
                       : "text-gray-300"
                   }`}
                 />
               ))}
-              <span className="ml-2 text-lg font-semibold">{review.title}</span>
+
+              <span className="ml-2 text-base sm:text-lg font-semibold">
+                {review.title}
+              </span>
             </div>
-            <p className="mb-2">
+            <p className="mb-2 text-sm sm:text-base">
               <span className="font-semibold">Pros:</span> {review.pros}
             </p>
             {review.cons && (
-              <p className="mb-2">
+              <p className="mb-2 text-sm sm:text-base">
                 <span className="font-semibold">Cons:</span> {review.cons}
               </p>
             )}
-            <div className="flex items-center text-sm text-gray-600">
+            <div className="flex items-center text-xs sm:text-sm text-gray-600">
               <span>{review.author}</span>
               <span className="mx-2">•</span>
               <span>{review.date}</span>
             </div>
             <div className="mt-2 flex items-center space-x-4">
-              <button className="flex items-center text-sm text-gray-600">
-                <ThumbsUp className="w-4 h-4 mr-1" />
+              <button className="flex items-center text-xs sm:text-sm text-gray-600">
+                <ThumbsUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                 {review.likes}
               </button>
-              <button className="flex items-center text-sm text-gray-600">
-                <ThumbsDown className="w-4 h-4 mr-1" />
+              <button className="flex items-center text-xs sm:text-sm text-gray-600">
+                <ThumbsDown className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                 {review.dislikes}
               </button>
             </div>
@@ -161,16 +170,11 @@ export default function Component() {
         ))}
       </div>
 
-      <div className="mt-8 flex items-center justify-center">
-        <button className="flex items-center px-4 py-2 border rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+      <div className="mt-6 sm:mt-8 flex items-center justify-center">
+        <button className="flex items-center px-4 py-2 border rounded-full text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
           <span>Show more reviews</span>
-          <ChevronDown className="w-4 h-4 ml-1" />
+          <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
         </button>
-      </div>
-
-      <div className="mt-8 bg-gray-900 text-white px-4 py-2 rounded-full inline-flex items-center">
-        <span className="mr-2">✈️</span>
-        Airplane mode enabled
       </div>
     </div>
   );

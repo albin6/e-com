@@ -14,10 +14,9 @@ axiosInstance.interceptors.request.use(async (config) => {
 
   return config;
 });
-
+// ===========================================================================================================
 axiosInstance.interceptors.response.use(
   (response) => {
-    console.log("in axios response interceptor ===>", response);
     if (response?.data?.access_token) {
       localStorage.setItem(
         "user_access_token",
@@ -93,6 +92,7 @@ axiosInstance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+// ===========================================================================================================
 
 // --------------------------------------------------------------
 // --------------------------------------------------------------
@@ -115,7 +115,6 @@ adminAxiosInstance.interceptors.request.use(async (config) => {
 
 adminAxiosInstance.interceptors.response.use(
   (response) => {
-    console.log("in axios response interceptor ===>", response);
     if (response?.data?.access_token) {
       localStorage.setItem(
         "admin_access_token",

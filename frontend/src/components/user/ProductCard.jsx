@@ -18,11 +18,6 @@ function ProductCard({ product }) {
           alt={product.name}
           className="w-full h-full object-cover"
         />
-        <div className="absolute top-2 right-2 flex space-x-2">
-          <button className="p-1 bg-white rounded-full shadow hover:bg-gray-100 transition-colors duration-200">
-            <Heart className="w-5 h-5 text-gray-600" />
-          </button>
-        </div>
       </div>
       <div className="p-4">
         <h2 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-800 mb-2 line-clamp-2">

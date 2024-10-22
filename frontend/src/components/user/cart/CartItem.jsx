@@ -1,8 +1,22 @@
 import { Minus, Plus } from "lucide-react";
 
+import { useContext, useEffect, useMemo } from "react";
+import { toast } from "react-toastify";
+import { stockContext } from "../../../pages/user/CartPage";
+
 const CartItem = ({ product, onRemove, onUpdateQuantity }) => {
-  const currentVariant = product.product.variants.filter(
-    (variant) => variant.sku === product.variant
+  const { handleStockChange } = useContext(stockContext);
+  const currentVariant = useMemo(
+    () =>
+      product.product.variants.filter(
+        (variant) => variant.sku === product.variant
+      ),
+    [product]
+  );
+
+  useEffect(
+    () => handleStockChange(currentVariant.filter((item) => item.stock === 0)),
+    [currentVariant]
   );
   console.log(currentVariant.map((item) => item.stock)[0]);
   console.log(product.quantity);
@@ -54,7 +68,9 @@ const CartItem = ({ product, onRemove, onUpdateQuantity }) => {
             onClick={() =>
               currentVariant.map((item) => item.stock)[0] > product.quantity
                 ? onUpdateQuantity(product.variant, product.quantity + 1)
-                : alert("limit rached")
+                : toast.warn("Limit exceeded - No stock left", {
+                    position: "top-center",
+                  })
             }
             className="border rounded-r px-2 py-1"
             disabled={product.quantity >= 5}
@@ -65,11 +81,11 @@ const CartItem = ({ product, onRemove, onUpdateQuantity }) => {
       </div>
       <div className="flex flex-col items-end mt-4 sm:mt-0">
         <span className="font-semibold text-lg mb-2">
-          ₹{product.product.price.toFixed(2)}
+          ₹{product.totalPrice.toFixed(2)}
         </span>
         <button
           onClick={() => onRemove(product.variant)}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+          className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors"
         >
           Remove
         </button>

@@ -2,17 +2,21 @@ import mongoose from "mongoose";
 
 const wishlist_schema = new mongoose.Schema(
   {
-    userId: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "user",
       required: true,
     },
     items: [
       {
-        productId: {
+        product: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
           required: true,
+        },
+        variant: {
+          type: String,
+          required: true, // it store the sku
         },
         addedAt: {
           type: Date,

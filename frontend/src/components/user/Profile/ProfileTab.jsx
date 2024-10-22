@@ -3,6 +3,7 @@ import { Button } from "../../ui/ui-components";
 import { Input } from "../../ui/ui-components";
 import { Label } from "../../ui/ui-components";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+
 import {
   useProfileInfo,
   useProfileInfoMutation,
@@ -13,10 +14,14 @@ import {
 } from "../../../utils/profile/profileCRUD";
 import { useNavigate } from "react-router-dom";
 
+import { toast } from "react-toastify";
+
 export default function ProfileTab() {
   const navigate = useNavigate();
   const { data, isError, isLoading } = useProfileInfo(fetchUserInformation);
   const { mutate: updateProfile } = useProfileInfoMutation(updateUserProfile);
+
+  const [successMessage, setSuccessMessage] = useState("");
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -25,7 +30,6 @@ export default function ProfileTab() {
   });
 
   useEffect(() => {
-    console.log(data?.user_data);
     setFormData((prev) => ({
       ...prev,
       ...data?.user_data,
@@ -38,7 +42,7 @@ export default function ProfileTab() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
+
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -58,25 +62,38 @@ export default function ProfileTab() {
   };
 
   const handleSubmit = (e) => {
+    setErrors({});
     e.preventDefault();
     const newErrors = validateForm();
     if (Object.keys(newErrors).length === 0) {
       setIsSubmitting(true);
-      // Simulating API call
-      console.log("Form submitted:", formData);
-      updateProfile(formData);
-      setIsSubmitting(false);
-      // Reset password fields after successful submission
-      setFormData((prev) => ({
-        ...prev,
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      }));
+
+      updateProfile(formData, {
+        onSuccess: () => {
+          setSuccessMessage("Profile updated successfully");
+          setIsSubmitting(false);
+        },
+        onError: () => {
+          toast.error("Failed to update profile. Please try again.", {
+            position: "top-center",
+          });
+          setIsSubmitting(false);
+        },
+      });
     } else {
       setErrors(newErrors);
     }
   };
+
+  useEffect(() => {
+    if (successMessage) {
+      toast.success(successMessage, {
+        position: "top-center",
+        pauseOnHover: true,
+      });
+      setSuccessMessage(""); // Reset success message after displaying the toast
+    }
+  }, [successMessage]);
 
   if (isLoading) {
     return <h3>Loading...</h3>;
@@ -136,7 +153,7 @@ export default function ProfileTab() {
         <Label htmlFor="phone">Phone</Label>
         <Input
           id="phone"
-          name="phone"
+          name="phone_number"
           value={formData?.phone_number}
           onChange={handleChange}
           className={errors.phone ? "border-red-500" : ""}

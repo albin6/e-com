@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Star,
   ChevronDown,
@@ -11,15 +11,17 @@ import { axiosInstance } from "../../config/axiosInstance";
 import Error from "../Error";
 import ProductListingShimmer from "../ui/ProductListingShimmer";
 import { useNavigate } from "react-router-dom";
+import { searchContext } from "../../context/Search";
 
 export default function ProductListing() {
+  const { searchTerm } = useContext(searchContext);
   const navigate = useNavigate();
   const [brands, setBrands] = useState([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [brandExpanded, setBrandExpanded] = useState(true);
   const [osExpanded, setOsExpanded] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState("newest");
+  const [sortBy, setSortBy] = useState("priceLowHigh");
   const itemsPerPage = 3;
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -38,6 +40,10 @@ export default function ProductListing() {
     ram: [],
   });
 
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const fetchProducts = async (currentPage, itemsPerPage, sortBy) => {
     setIsLoading(true);
     try {
@@ -45,6 +51,7 @@ export default function ProductListing() {
         `/api/users/get-listing-products`,
         {
           params: {
+            term: searchTerm,
             page: currentPage,
             limit: itemsPerPage,
             sort: sortBy,
@@ -78,7 +85,7 @@ export default function ProductListing() {
 
   useEffect(() => {
     fetchProducts(currentPage, itemsPerPage, sortBy);
-  }, [currentPage, sortBy, filters]);
+  }, [currentPage, sortBy, filters, searchTerm]);
 
   const handleFilterChange = (filterType, value) => {
     setFilters((prevFilters) => {
@@ -269,17 +276,19 @@ export default function ProductListing() {
                 value={sortBy}
                 onChange={handleSort}
               >
-                <option value="discountHighLow">
-                  Sort By: Discount High-Low
-                </option>
-                <option value="newest">Sort By: Newest First</option>
+                <option value="featured">Sort By: Featured</option>
+                {/* <option value="popularity">Sort By: Popularity</option> */}
                 <option value="priceLowHigh">Sort By: Price Low-High</option>
                 <option value="priceHighLow">Sort By: Price High-Low</option>
+                {/* <option value="rating">Sort By: Average Rating</option> */}
+                <option value="new-arrivals">Sort By: New Arrivals</option>
+                <option value="name-asc">Sort By: Name A to Z</option>
+                <option value="name-desc">Sort By: Name Z to A</option>
               </select>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <div
                 key={product._id}
                 className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col cursor-pointer transition-transform duration-300 hover:scale-105"

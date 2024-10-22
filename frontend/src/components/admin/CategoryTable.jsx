@@ -21,11 +21,7 @@ function CategoryTable() {
   const [editingCategory, setEditingCategory] = useState(null);
 
   const handleUpdate = (updatedCategory) => {
-    console.log(
-      "updated category id type => ",
-      updatedCategory._id,
-      typeof updatedCategory._id
-    );
+    console.log("updated category id type => ", updatedCategory);
     editCategory(updatedCategory);
     setIsModalOpen(false);
     setEditingCategory(null);

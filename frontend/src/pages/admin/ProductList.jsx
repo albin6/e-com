@@ -5,7 +5,7 @@ import Sidebar from "../../components/admin/Sidebar";
 
 function ProductList() {
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex bg-gray-100">
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />

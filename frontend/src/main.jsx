@@ -10,11 +10,13 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")).render(
-  <GoogleOAuthProvider clientId="447481056732-4t1390i8fon4qu3k94416jqrv2o4vmsk.apps.googleusercontent.com">
-    <QueryClientProvider client={queryClient}>
-      <Provider store={store}>
-        <App />
-      </Provider>
-    </QueryClientProvider>
-  </GoogleOAuthProvider>
+  <StrictMode>
+    <GoogleOAuthProvider clientId="447481056732-4t1390i8fon4qu3k94416jqrv2o4vmsk.apps.googleusercontent.com">
+      <QueryClientProvider client={queryClient}>
+        <Provider store={store}>
+          <App />
+        </Provider>
+      </QueryClientProvider>
+    </GoogleOAuthProvider>
+  </StrictMode>
 );
