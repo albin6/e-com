@@ -7,10 +7,13 @@ import {
   reset_password,
   logout,
   new_access_token_generate,
+  forgot_password_send_otp,
+  reset_the_password,
 } from "../controllers/user_controller.js";
 import {
   get_all_products_details,
   get_product,
+  variant_details_of_product,
 } from "../controllers/products_controller.js";
 import {
   get_listing_products_details,
@@ -38,6 +41,18 @@ import {
   get_cart_products,
   update_product_quantity,
 } from "../controllers/cart_controller.js";
+import {
+  add_product_to_wishlist,
+  check_product_in_wishlist,
+  get_wishlist_products,
+  remove_product_from_wishlist,
+} from "../controllers/wishlist_controller.js";
+import {
+  cancel_order,
+  get_specific_order_details,
+  get_user_specific_orders,
+  place_order,
+} from "../controllers/order_controller.js";
 const user_router = express.Router();
 
 user_router.post("/signup", register);
@@ -55,6 +70,7 @@ user_router.get(
   get_product
 );
 
+// ----------------------------------------------------
 // ----------------------------------------------------
 user_router.get(
   "/get-products-of-category/:categoryId",
@@ -109,6 +125,20 @@ user_router
   .get(authenticate_user_token, normalizeUserMiddleware, get_user_info)
   .put(authenticate_user_token, normalizeUserMiddleware, update_user_info);
 
+user_router.post(
+  "/send-verification-otp",
+  authenticate_user_token,
+  normalizeUserMiddleware,
+  forgot_password_send_otp
+);
+
+user_router.post(
+  "/reset-the-password",
+  authenticate_user_token,
+  normalizeUserMiddleware,
+  reset_the_password
+);
+
 // ----------------------------------------------------
 // ----------------------------------------------------
 
@@ -133,6 +163,57 @@ user_router
   )
   .delete(authenticate_user_token, normalizeUserMiddleware, delete_product);
 
+// ----------------------------------------------------
+// ----------------------------------------------------
+
+user_router
+  .route("/wishlists")
+  .get(authenticate_user_token, normalizeUserMiddleware, get_wishlist_products)
+  .post(
+    authenticate_user_token,
+    normalizeUserMiddleware,
+    add_product_to_wishlist
+  )
+  .delete(
+    authenticate_user_token,
+    normalizeUserMiddleware,
+    remove_product_from_wishlist
+  );
+
+user_router.get(
+  "/wishlists/product-existence",
+  authenticate_user_token,
+  normalizeUserMiddleware,
+  check_product_in_wishlist
+);
+
+// ----------------------------------------------------
+// ----------------------------------------------------
+
+user_router.get("/get-variant-details-of-product", variant_details_of_product);
+
+user_router.post(
+  "/place-order",
+  authenticate_user_token,
+  normalizeUserMiddleware,
+  place_order
+);
+
+user_router.get(
+  "/orders",
+  authenticate_user_token,
+  normalizeUserMiddleware,
+  get_user_specific_orders
+);
+
+user_router
+  .route("/orders/:orderId")
+  .get(
+    authenticate_user_token,
+    normalizeUserMiddleware,
+    get_specific_order_details
+  )
+  .patch(authenticate_user_token, normalizeUserMiddleware, cancel_order);
 // ----------------------------------------------------
 // ----------------------------------------------------
 

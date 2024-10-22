@@ -54,7 +54,7 @@ export const update_category = AsyncHandler(async (req, res) => {
     is_updated = true;
   }
 
-  if (category.status && category.status !== category_data.status) {
+  if (category.status !== category_data.status) {
     category_data.status = category.status;
     is_updated = true;
   }

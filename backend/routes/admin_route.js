@@ -28,6 +28,15 @@ import {
 } from "../controllers/products_controller.js";
 import { authenticate_admin_token } from "../middleware/authenticate_admin_token.js";
 import { upload, upload_prodcuct } from "../utils/multer/multer.js";
+import {
+  add_new_coupon,
+  get_coupons,
+} from "../controllers/coupon_controller.js";
+import {
+  cancel_order,
+  get_all_orders,
+  update_order_status,
+} from "../controllers/order_controller.js";
 const admin_router = express.Router();
 
 // admin login / logout
@@ -71,6 +80,29 @@ admin_router
   .get(authenticate_admin_token, get_product)
   .put(authenticate_admin_token, upload_prodcuct, update_product_details)
   .patch(authenticate_admin_token, update_product_status);
+
+// -------------------------------------------------------
+
+admin_router
+  .route("/coupons")
+  .get(authenticate_admin_token, get_coupons)
+  .post(authenticate_admin_token, add_new_coupon);
+
+// -------------------------------------------------------
+
+admin_router.get("/orders", authenticate_admin_token, get_all_orders);
+
+admin_router.patch(
+  "/orders/:orderId/status",
+  authenticate_admin_token,
+  update_order_status
+);
+
+admin_router.patch(
+  "/orders/:orderId/cancel",
+  authenticate_admin_token,
+  cancel_order
+);
 
 // -------------------------------------------------------
 // -------------------------------------------------------

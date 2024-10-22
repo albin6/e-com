@@ -28,6 +28,7 @@ import {
   fetchProductsData,
 } from "../../utils/products/adminProductListing";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function ProductForm() {
   const navigate = useNavigate();
@@ -188,7 +189,10 @@ export default function ProductForm() {
       return;
     }
     console.log(data);
-    addProduct(data);
+    addProduct(data, {
+      onSuccess: () =>
+        toast.success("Product Added Successfully", { position: "top-center" }),
+    });
     navigate("/admin/products");
   };
 

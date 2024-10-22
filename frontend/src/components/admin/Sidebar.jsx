@@ -15,10 +15,10 @@ import {
 export default function Sidebar() {
   const menuItems = [
     { name: "Products", icon: Package, api: "/admin/products" },
-    { name: "Order List", icon: ShoppingCart },
+    { name: "Order List", icon: ShoppingCart, api: "/admin/orders" },
     { name: "Users", icon: Users, api: "/admin/users" },
     { name: "Sales", icon: BarChart },
-    { name: "Coupons", icon: Tag },
+    { name: "Coupons", icon: Tag, api: "/admin/coupons" },
     { name: "Offers", icon: Gift },
     { name: "Category", icon: Grid, api: "/admin/category" },
     { name: "Brand", icon: Blocks, api: "/admin/brand" },
@@ -26,7 +26,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute  inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out">
+    <div className="bg-gray-800 min-h-screen text-white w-64 space-y-6 py-7 px-2 absolute  inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out">
       <Link
         to={"/admin"}
         className="text-white flex items-center space-x-2 px-4"

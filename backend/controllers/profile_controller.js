@@ -1,9 +1,5 @@
 import AsyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
-import {
-  compare_password,
-  hash_password,
-} from "../utils/secure-password/password-bcrypt.js";
 
 // for getting user information
 export const get_user_info = AsyncHandler(async (req, res) => {
@@ -29,13 +25,6 @@ export const update_user_info = AsyncHandler(async (req, res) => {
   user.first_name = user_data.first_name || user.first_name;
   user.last_name = user_data.last_name || user.last_name;
   user.phone_number = user_data.phone_number || user.phone_number;
-  user.email = user_data.email || user.email;
-  user.password = (await compare_password(
-    user_data.currentPassword,
-    user.password
-  ))
-    ? user.password
-    : await hash_password(user_data.confirmPassword);
 
   await user.save();
 

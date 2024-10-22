@@ -1,10 +1,20 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Check } from "lucide-react";
 
-export default function OTPVerification({ onVerify, email }) {
+export default function OTPVerification({ onVerify, email, onResendOTP }) {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
   const inputs = useRef([]);
+
+  const [timeLeft, setTimeLeft] = useState(60); // 1 minute in seconds
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const handleChange = (element, index) => {
     if (isNaN(element.value)) return false;
@@ -26,6 +36,12 @@ export default function OTPVerification({ onVerify, email }) {
     }
     setError("");
     onVerify(otpString);
+  };
+
+  const handleResendOTP = () => {
+    setOtp(["", "", "", "", "", ""]);
+    onResendOTP(); // trigger OTP resend logic
+    setTimeout(() => setTimeLeft(60), 8000); // reset the timer to 60 seconds
   };
 
   return (
@@ -54,6 +70,29 @@ export default function OTPVerification({ onVerify, email }) {
         >
           <Check className="mr-2 h-5 w-5" />
           Verify OTP
+        </button>
+      </div>
+      <div className="text-center mt-4">
+        <p className="text-sm text-gray-500">
+          Time remaining:{" "}
+          <span className="font-medium">
+            {Math.floor(timeLeft / 60)}:
+            {(timeLeft % 60).toString().padStart(2, "0")}
+          </span>
+        </p>
+      </div>
+      {/* Resend OTP Button */}
+      <div className="mt-4">
+        <button
+          onClick={handleResendOTP}
+          disabled={timeLeft > 0}
+          className={`w-full inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white ${
+            timeLeft > 0
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          } focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2`}
+        >
+          {timeLeft > 0 ? `Resend OTP in ${timeLeft}s` : "Resend OTP"}
         </button>
       </div>
     </form>

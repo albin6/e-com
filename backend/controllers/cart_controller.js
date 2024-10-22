@@ -35,8 +35,12 @@ export const add_product_to_cart = AsyncHandler(async (req, res) => {
     const { discount } = req.body.product;
     const quantity = 1;
 
+    console.log(price);
+
     const discountAmount = (price * discount) / 100;
     const totalPrice = price - discountAmount;
+
+    console.log(totalPrice);
 
     // Create cart item
     const cartItem = {
@@ -57,6 +61,17 @@ export const add_product_to_cart = AsyncHandler(async (req, res) => {
         items: [cartItem],
       });
     } else {
+      const productExists = cart.items.some(
+        (item) =>
+          item.product.toString() === req.body.product._id &&
+          item.variant === sku
+      );
+
+      if (productExists) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Product already in Cart" });
+      }
       // Add item to existing cart
       cart.items.push(cartItem);
     }

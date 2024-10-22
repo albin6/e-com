@@ -1,13 +1,31 @@
-import React from "react";
+import React, { createContext, useState } from "react";
 import Header from "../../components/user/Header";
 import Cart from "../../components/user/cart/Cart";
 import Footer from "../../components/user/Footer";
+
+export const stockContext = createContext([]);
+
+function StockContextProvider({ children }) {
+  const [stock, setStock] = useState([]);
+
+  function handleStockChange(newStock) {
+    setStock(newStock);
+  }
+
+  return (
+    <stockContext.Provider value={{ stock, handleStockChange }}>
+      {children}
+    </stockContext.Provider>
+  );
+}
 
 function CartPage() {
   return (
     <>
       <Header />
-      <Cart />
+      <StockContextProvider>
+        <Cart />
+      </StockContextProvider>
       <Footer />
     </>
   );

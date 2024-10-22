@@ -6,8 +6,6 @@ import Product from "../models/productModel.js";
 // desc => for listing products
 // GET /api/admin/products
 export const get_products_details = AsyncHandler(async (req, res) => {
-  console.log("hello in get_all_product_details");
-
   try {
     // Fetch all products with populated category and brand details
     const products = await Product.find()
@@ -32,18 +30,11 @@ export const get_products_details = AsyncHandler(async (req, res) => {
 
     // Check if products exist
     if (!products.length) {
-      return res.status(200).json({
+      return res.status(404).json({
         success: true,
         message: "No products found",
-        products,
-        brands,
-        categories,
       });
     }
-
-    console.log(products);
-    console.log(categories);
-    console.log(brands);
 
     // If everything is successful, return the data
     res.status(200).json({ success: true, products, brands, categories });
@@ -61,8 +52,6 @@ export const get_products_details = AsyncHandler(async (req, res) => {
 // desc => for users home page
 // GET /api/users/products
 export const get_all_products_details = AsyncHandler(async (req, res) => {
-  console.log("hello in get_all_product_details");
-
   try {
     // Fetch all products with populated category and brand details
     const products_data = await Product.find({ is_active: true })
@@ -97,10 +86,6 @@ export const get_all_products_details = AsyncHandler(async (req, res) => {
         categories,
       });
     }
-
-    console.log(products);
-    console.log(categories);
-    console.log(brands);
 
     // If everything is successful, return the data
     res.status(200).json({ success: true, products, brands, categories });
@@ -139,7 +124,6 @@ export const get_product = AsyncHandler(async (req, res) => {
       .status(500)
       .json({ success: false, message: "Failed to fetch brands" });
   }
-  console.log("in get product =>>>>", product);
 
   if (product) {
     return res.status(200).json({
@@ -175,7 +159,6 @@ export const add_new_product = AsyncHandler(async (req, res) => {
   if (req.files && req.files.length > 0) {
     req.files.forEach((file) => {
       const variantId = file.fieldname.split("[")[1].split("]")[0];
-      console.log("variant id =====>>>", variantId);
       if (!imagesByVariant[variantId]) {
         imagesByVariant[variantId] = [];
       }
@@ -183,7 +166,6 @@ export const add_new_product = AsyncHandler(async (req, res) => {
     });
   }
 
-  console.log("image by variant ====>>>>>>>>>", imagesByVariant);
   try {
     // Fetch brand and category information from the database
     const brand_data = await Brand.findOne({ name: brand });
@@ -260,11 +242,6 @@ export const update_product_details = AsyncHandler(async (req, res) => {
     variants,
   } = req.body;
 
-  // console.log("request files ===>", req.files);
-  console.log("request body images ===>", req.body.variants[0].images);
-  console.log("branddddddddd ===>", brand);
-  console.log("categoryyyyy ===>", category);
-
   // Create an object to map images to their respective variants
   const imagesByVariant = {};
 
@@ -272,7 +249,6 @@ export const update_product_details = AsyncHandler(async (req, res) => {
   if (req.files.length != 0 && req.files.length > 0) {
     req.files.forEach((file) => {
       const variantId = file.fieldname.split("[")[1].split("]")[0];
-      console.log("variant id =====>>>", variantId);
       if (!imagesByVariant[variantId]) {
         imagesByVariant[variantId] = [];
       }
@@ -280,7 +256,6 @@ export const update_product_details = AsyncHandler(async (req, res) => {
     });
   }
 
-  console.log("image by variant ====>>>>>>>>>", imagesByVariant);
   try {
     const product_to_update = await Product.findById(productId);
     if (!product_to_update) {
@@ -358,7 +333,6 @@ export const update_product_details = AsyncHandler(async (req, res) => {
 
     // Save the new product to the database
     await product_to_update.save();
-    console.log("hereeeee");
     // If everything is successful, return the data
     res.status(200).json({ success: true, product_to_update, brand, category });
   } catch (error) {
@@ -396,4 +370,81 @@ export const update_product_status = AsyncHandler(async (req, res) => {
       error: error.message,
     });
   }
+});
+
+export const variant_details_of_product = AsyncHandler(async (req, res) => {
+  console.log("in variant_details_of_product");
+  const { productId, variant } = req.query;
+
+  console.log(req.query);
+
+  if (!productId || !variant) {
+    return res.status(400).json({
+      success: false,
+      message: "Product ID and variant are required.",
+    });
+  }
+
+  // Find the product by ID
+  const product = await Product.findById(productId)
+    .populate("brand", "name") // Assuming you want the name of the brand to be populated
+    .populate("category", "name") // Assuming you want the name of the category to be populated
+    .exec();
+
+  if (!product) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Product not found." });
+  }
+
+  // Find the specific variant inside the product
+  const selectedVariant = product.variants.find((v) => v.sku === variant);
+
+  if (!selectedVariant) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Variant not found." });
+  }
+
+  // Format the response
+  const cartData = {
+    items: [
+      {
+        product: {
+          specifications: product.specifications,
+          _id: product._id,
+          name: product.name,
+          brand: product.brand._id, // Assuming brand is populated
+          is_active: product.is_active,
+          description: product.description,
+          category: product.category._id, // Assuming category is populated
+          price: product.price,
+          discount: product.discount,
+          variants: [selectedVariant],
+          tags: product.tags,
+          releaseDate: product.releaseDate,
+          isFeatured: product.isFeatured,
+          createdAt: product.createdAt,
+          updatedAt: product.updatedAt,
+          reviews: product.reviews,
+        },
+        variant: selectedVariant.sku,
+        quantity: 1, // Adjust the quantity as needed or get it from the request body
+        price: selectedVariant.price,
+        discount: product.discount,
+        totalPrice:
+          selectedVariant.price -
+          selectedVariant.price * (product.discount / 100),
+        _id: "itemIdPlaceholder", // Replace with actual item ID if available
+      },
+    ],
+    totalAmount:
+      selectedVariant.price - selectedVariant.price * (product.discount / 100),
+  };
+
+  // Return the response
+  res.status(200).json({
+    success: true,
+    cart_data: cartData,
+  });
 });

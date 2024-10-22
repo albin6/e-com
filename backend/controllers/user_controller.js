@@ -140,81 +140,97 @@ export const send_otp = AsyncHandler(async (req, res) => {
   const is_user_exists = await User.findOne({ email: data.email });
   console.log(is_user_exists);
 
-  if (data?.user) {
-    if (is_user_exists) {
-      const otp = generateOTP();
-      console.log(otp);
+  if (is_user_exists) {
+    const otp = generateOTP();
+    console.log(otp);
 
-      await OTP.create({
-        email: data.email,
-        otp,
+    await OTP.create({
+      email: data.email,
+      otp,
+    });
+
+    send_verification_email(data.email, otp);
+    res.json({ success: true, message: "OTP sent successfully" });
+
+    let intervalId;
+
+    const deleteExpiredOTPs = async () => {
+      const now = new Date();
+      const result = await OTP.deleteMany({
+        createdAt: { $lte: new Date(now.getTime() - 60 * 1000) }, // 1 minute ago
       });
 
-      send_verification_email(data.email, otp);
-      res.json({ success: true, message: "OTP sent successfully" });
+      // If no OTPs were deleted, stop the interval
+      if (result.deletedCount === 0) {
+        clearInterval(intervalId);
+        console.log("No expired OTPs found. Stopping the interval.");
+      } else {
+        console.log(`${result.deletedCount} expired OTP(s) deleted.`);
+      }
+    };
 
-      let intervalId;
-
-      const deleteExpiredOTPs = async () => {
-        const now = new Date();
-        const result = await OTP.deleteMany({
-          createdAt: { $lte: new Date(now.getTime() - 60 * 1000) }, // 1 minute ago
-        });
-
-        // If no OTPs were deleted, stop the interval
-        if (result.deletedCount === 0) {
-          clearInterval(intervalId);
-          console.log("No expired OTPs found. Stopping the interval.");
-        } else {
-          console.log(`${result.deletedCount} expired OTP(s) deleted.`);
-        }
-      };
-
-      // Start the interval when needed
-      intervalId = setInterval(deleteExpiredOTPs, 5000);
-    } else {
-      return res
-        .status(404)
-        .json({ success: false, message: "The email is not registered" });
-    }
+    // Start the interval when needed
+    intervalId = setInterval(deleteExpiredOTPs, 5000);
   } else {
-    if (!is_user_exists) {
-      const otp = generateOTP();
-      console.log(otp);
-
-      await OTP.create({
-        email: data.email,
-        otp,
-      });
-
-      send_verification_email(data.email, otp);
-      res.json({ success: true, message: "OTP sent successfully" });
-
-      let intervalId;
-
-      const deleteExpiredOTPs = async () => {
-        const now = new Date();
-        const result = await OTP.deleteMany({
-          createdAt: { $lte: new Date(now.getTime() - 60 * 1000) }, // 1 minute ago
-        });
-
-        // If no OTPs were deleted, stop the interval
-        if (result.deletedCount === 0) {
-          clearInterval(intervalId);
-          console.log("No expired OTPs found. Stopping the interval.");
-        } else {
-          console.log(`${result.deletedCount} expired OTP(s) deleted.`);
-        }
-      };
-
-      // Start the interval when needed
-      intervalId = setInterval(deleteExpiredOTPs, 5000);
-    } else {
-      return res
-        .status(409)
-        .json({ success: false, message: "User is already registered" });
-    }
+    return res
+      .status(409)
+      .json({ success: false, message: "User is already registered" });
   }
+});
+
+// ===========================================================================================
+// ===========================================================================================
+// generate an otp
+// POST /api/user/send-verification-otp
+export const forgot_password_send_otp = AsyncHandler(async (req, res) => {
+  if (!req.user || !req.user.id) {
+    return res
+      .status(401)
+      .json({ success: false, message: "User not authenticated" });
+  }
+
+  const curr_user = await User.findOne({
+    _id: req.user.id,
+    email: req.body.email.trim(),
+  });
+
+  if (!curr_user) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Wrong email or user not found" });
+  }
+
+  const otp = generateOTP();
+
+  // Save the OTP to the database
+  await OTP.create({
+    email: curr_user.email,
+    otp,
+  });
+
+  // Send the OTP to the user's email
+  send_verification_email(curr_user.email, otp);
+  res.json({ success: true, message: "OTP sent successfully" });
+
+  let intervalId;
+
+  const deleteExpiredOTPs = async () => {
+    const now = new Date();
+    const result = await OTP.deleteMany({
+      createdAt: { $lte: new Date(now.getTime() - 60 * 1000) }, // 1 minute ago
+    });
+
+    // If no OTPs were deleted, stop the interval
+    if (result.deletedCount === 0) {
+      clearInterval(intervalId);
+      console.log("No expired OTPs found. Stopping the interval.");
+    } else {
+      console.log(`${result.deletedCount} expired OTP(s) deleted.`);
+    }
+  };
+
+  // Start the interval when needed
+  intervalId = setInterval(deleteExpiredOTPs, 5000);
 });
 
 // POST /api/users/verify-otp
@@ -230,13 +246,13 @@ export const verify_otp = AsyncHandler(async (req, res) => {
       const user = await User.findOne({ email }).select("-password");
       res.json({ success: true, message: "OTP verified successfully", user });
     } else {
-      return res.json({
+      return res.status(400).json({
         invalid: true,
         message: "OTP is not valid",
       });
     }
   } else {
-    return res.json({ expires: true, message: "OTP Expires" });
+    return res.status(400).json({ expires: true, message: "OTP Expires" });
   }
 });
 
@@ -258,6 +274,29 @@ export const reset_password = AsyncHandler(async (req, res) => {
     message: "Your password has been successfully reset.",
   });
 });
+
+// ==================================================================================
+
+// POST /api/users/reset-the-password
+export const reset_the_password = AsyncHandler(async (req, res) => {
+  const id = req.user.id;
+  const { password } = req.body;
+
+  console.log("reset_password =>>>", id, password);
+
+  const hashed_password = await hash_password(password);
+  const user = await User.findById(id);
+
+  user.password = hashed_password;
+
+  await user.save();
+
+  res.json({
+    success: true,
+    message: "Your password has been successfully reset.",
+  });
+});
+// ==================================================================================
 
 // POST /api/users/logout
 export const logout = AsyncHandler(async (req, res) => {

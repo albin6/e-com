@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import CartItem from "./CartItem";
 import {
   useCartProduct,
@@ -10,8 +10,11 @@ import {
   updateCartQuantity,
 } from "../../../utils/cart/cartCRUD";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { stockContext } from "../../../pages/user/CartPage";
 
 const Cart = () => {
+  const { stock } = useContext(stockContext);
   const navigate = useNavigate();
   const { data: products, isError, isLoading } = useCartProduct();
   const { mutate: updateCartProductQuantity } =
@@ -27,7 +30,12 @@ const Cart = () => {
 
   const removeFromCart = (sku) => {
     console.log(sku);
-    removeProductFromCart(sku);
+    removeProductFromCart(sku, {
+      onSuccess: () =>
+        toast.success("Product removed from cart", {
+          position: "top-center",
+        }),
+    });
     console.log("product removed from cart");
   };
 
@@ -47,7 +55,7 @@ const Cart = () => {
   let subtotal;
   if (cart?.items) {
     subtotal = cart?.items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
+      (sum, item) => sum + item.totalPrice * item.quantity,
       0
     );
   }
@@ -65,8 +73,8 @@ const Cart = () => {
       </div>
 
       <div className="lg:flex lg:space-x-8">
-        <div className="lg:w-2/3">
-          {cart?.items &&
+        <div className="lg:w-2/3 min-h-96">
+          {cart?.items && cart.items.length > 0 ? (
             cart?.items.map((item) => (
               <CartItem
                 key={item._id}
@@ -74,7 +82,12 @@ const Cart = () => {
                 onRemove={removeFromCart}
                 onUpdateQuantity={updateQuantity}
               />
-            ))}
+            ))
+          ) : (
+            <div className="h-3/5  flex justify-center items-center font-medium text-xl">
+              No prodcuts in cart!
+            </div>
+          )}
           <div className="text-right font-semibold text-xl mt-4">
             Total: ₹{total.toFixed(2)}
           </div>
@@ -85,7 +98,7 @@ const Cart = () => {
             <h2 className="text-xl font-semibold mb-4">Cart Total</h2>
             <div className="flex justify-between mb-2">
               <span>Subtotal:</span>
-              <span>₹{cart?.totalAmount?.toFixed(2)}</span>
+              <span>₹{total.toFixed(2)}</span>
             </div>
             <div className="flex justify-between mb-2">
               <span>Discount:</span>
@@ -103,14 +116,25 @@ const Cart = () => {
             </div>
             <div className="flex justify-between font-semibold text-lg mt-4">
               <span>Total:</span>
-              <span>₹{cart?.totalAmount?.toFixed(2)}</span>
+              <span>₹{total.toFixed(2)}</span>
             </div>
-            <button
-              className="w-full bg-red-500 text-white py-2 rounded mt-6 hover:bg-red-600 transition-colors"
-              onClick={() => navigate("/checkout")}
-            >
-              Proceed to checkout
-            </button>
+
+            {(stock && stock.length !== 0) ||
+            (cart?.items && cart?.items.length === 0) ? (
+              <button
+                className="w-full bg-gray-800 opacity-50 text-white py-2 rounded mt-6 hover:bg-gray-700 transition-colors"
+                disabled
+              >
+                Proceed to checkout
+              </button>
+            ) : (
+              <button
+                className="w-full bg-gray-800 text-white py-2 rounded mt-6 hover:bg-gray-700 transition-colors"
+                onClick={() => navigate("/checkout")}
+              >
+                Proceed to checkout
+              </button>
+            )}
           </div>
         </div>
       </div>

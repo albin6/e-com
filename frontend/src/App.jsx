@@ -1,5 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import LoginPage from "./pages/user/LoginPage";
 import SignupPage from "./pages/user/SignupPage";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -27,6 +30,9 @@ import OrderDetailsPage from "./pages/user/OrderDetailsPage";
 import ResetPassword from "./pages/user/ResetPassword";
 import CartPage from "./pages/user/CartPage";
 import CheckoutPage from "./pages/user/CheckoutPage";
+import ProductListingWithAdvancedSearchAndFilter from "./components/user/ProductListingWithAdvancedSearchAndFilters";
+import OrderManagementPage from "./pages/admin/OrderManagementPage";
+import CouponManagementPage from "./pages/admin/CouponManagementPage";
 
 function AppLayout() {
   const admin = useSelector((state) => state.admin.adminInfo);
@@ -134,6 +140,16 @@ function AppLayout() {
           </RequireAuthentication>
         }
       />
+
+      <Route
+        path="/test"
+        element={
+          <RequireAuthentication>
+            <ProductListingWithAdvancedSearchAndFilter />
+          </RequireAuthentication>
+        }
+      />
+
       {/* --------------------------------------------------- */}
       {/* --------------------   admin    ------------------- */}
       {/* --------------------------------------------------- */}
@@ -189,6 +205,22 @@ function AppLayout() {
           </RequireAuth>
         }
       />
+      <Route
+        path="/admin/orders"
+        element={
+          <RequireAuth>
+            <OrderManagementPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin/coupons"
+        element={
+          <RequireAuth>
+            <CouponManagementPage />
+          </RequireAuth>
+        }
+      />
     </Routes>
   );
 }
@@ -197,6 +229,7 @@ function App() {
   return (
     <>
       <Router>
+        <ToastContainer />
         <AppLayout />
       </Router>
     </>

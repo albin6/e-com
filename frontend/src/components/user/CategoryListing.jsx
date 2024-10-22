@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Star,
   ChevronDown,
@@ -14,8 +14,11 @@ import ProductListingShimmer from "../ui/ProductListingShimmer";
 import CategoryProductCard from "./CategoryProductCard";
 import Pagination from "./Pagination";
 import FilterSection from "./FilterSection";
+import { searchContext } from "../../context/Search";
 
 export default function CategoryListing() {
+  const { searchTerm } = useContext(searchContext);
+
   const { categoryId } = useParams();
   const [brands, setBrands] = useState([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -24,7 +27,7 @@ export default function CategoryListing() {
   const [ramExpanded, setRamExpanded] = useState(false);
   const [storageExpanded, setStorageExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState("newest");
+  const [sortBy, setSortBy] = useState("priceLowHigh");
   const [itemsPerPage, setItemsPerPage] = useState(3);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -40,6 +43,10 @@ export default function CategoryListing() {
 
   const toggleFilters = () => setFiltersOpen(!filtersOpen);
 
+  const filteredProducts = products.filter((product) =>
+    product?.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const fetchProducts = async (currentPage, itemsPerPage, sortBy) => {
     setIsLoading(true);
     try {
@@ -47,6 +54,7 @@ export default function CategoryListing() {
         `/api/users/get-products-of-category/${categoryId}`,
         {
           params: {
+            term: searchTerm,
             page: currentPage,
             limit: itemsPerPage,
             sort: sortBy,
@@ -180,15 +188,19 @@ export default function CategoryListing() {
                 value={sortBy}
                 onChange={handleSort}
               >
-                <option value="newest">Newest First</option>
-                <option value="priceLowHigh">Price Low-High</option>
-                <option value="priceHighLow">Price High-Low</option>
-                <option value="discountHighLow">Discount High-Low</option>
+                <option value="featured">Sort By: Featured</option>
+                {/* <option value="popularity">Sort By: Popularity</option> */}
+                <option value="priceLowHigh">Sort By: Price Low-High</option>
+                <option value="priceHighLow">Sort By: Price High-Low</option>
+                {/* <option value="rating">Sort By: Average Rating</option> */}
+                <option value="new-arrivals">Sort By: New Arrivals</option>
+                <option value="name-asc">Sort By: Name A to Z</option>
+                <option value="name-desc">Sort By: Name Z to A</option>
               </select>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <CategoryProductCard key={product._id} product={product} />
             ))}
           </div>

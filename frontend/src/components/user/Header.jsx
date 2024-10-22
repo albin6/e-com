@@ -1,22 +1,22 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { Button, Input, IconButton, NavLink } from "../ui/ui-components";
 import { Search, Heart, ShoppingCart, User } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../../redux/Slices/userSlice";
 import { axiosInstance } from "../../config/axiosInstance";
+import { searchContext } from "../../context/Search";
 
 function Header() {
+  const location = useLocation();
+  const { searchTerm, handleSearchTermChange } = useContext(searchContext);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user.userInfo);
-  const [searchQuery, setSearchQuery] = useState("");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    console.log("Searching for:", searchQuery);
-    // Implement your search logic here
+  const handleSearch = (event) => {
+    handleSearchTermChange(event.target.value);
   };
 
   const handleLogout = async (e) => {
@@ -24,16 +24,13 @@ function Header() {
     setIsUserMenuOpen(false);
     try {
       await axiosInstance.post("/api/users/logout");
-      localStorage.removeItem("access_token");
+      localStorage.removeItem("user_access_token");
       dispatch(logoutUser());
       navigate("/");
     } catch (error) {
       console.log(error);
     }
   };
-
-  // Placeholder for user authentication check
-  // Replace with your Redux logic
 
   return (
     <header className="bg-white shadow-md">
@@ -52,23 +49,23 @@ function Header() {
         </nav>
 
         <div className="flex items-center space-x-4">
-          <form onSubmit={handleSearch} className="hidden md:block">
-            <div className="relative">
+          <div className="relative">
+            {(location.pathname === "/products/list" ||
+              location.pathname.match(
+                /^\/products\/categories\/[a-fA-F0-9]{24}$/
+              ) ||
+              location.pathname.match(
+                /^\/products\/brands\/[a-fA-F0-9]{24}$/
+              )) && (
               <Input
                 type="search"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10 w-64"
+                placeholder="Search products..."
+                className="w-full md:w-64"
+                value={searchTerm}
+                onChange={handleSearch}
               />
-              <Button
-                type="submit"
-                className="absolute right-0 top-0 bottom-0 px-3"
-              >
-                <Search className="h-5 w-5" />
-              </Button>
-            </div>
-          </form>
+            )}
+          </div>
 
           <IconButton
             icon={<Heart className="h-6 w-6" />}

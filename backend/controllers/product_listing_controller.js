@@ -15,6 +15,7 @@ export const get_products_of_category = AsyncHandler(async (req, res) => {
     });
   }
 
+  const term = req.query.term || "";
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 6;
   const sort = req.query.sort || "newest";
@@ -55,18 +56,44 @@ export const get_products_of_category = AsyncHandler(async (req, res) => {
     }
   }
 
+  if (term) {
+    filter["name"] = { $regex: term, $options: "i" };
+  }
+
   const totalProducts = await Product.countDocuments(filter);
   const totalPages = Math.ceil(totalProducts / limit);
 
   let sortOption = {};
-  if (sort === "newest") {
-    sortOption = { createdAt: -1 };
-  } else if (sort === "priceLowHigh") {
-    sortOption = { price: 1 };
-  } else if (sort === "priceHighLow") {
-    sortOption = { price: -1 };
-  } else if (sort === "discountHighLow") {
-    sortOption = { discount: -1 };
+  switch (sort) {
+    case "featured":
+      sortOption.isFeatured = -1;
+      break;
+    case "new-arrivals":
+      sortOption.createdAt = -1;
+      break;
+    case "priceLowHigh":
+      sortOption.price = 1;
+      break;
+    case "priceHighLow":
+      sortOption.price = -1;
+      break;
+    case "discountHighLow":
+      sortOption.discount = -1;
+      break;
+    case "name-asc":
+      sortOption.name = 1;
+      break;
+    case "name-desc":
+      sortOption.name = -1;
+      break;
+    // case "rating":
+    //   sortOption.ratng = 1;
+    //   break;
+    // case "popularity":
+    //   sortOption.popularity = 1;
+    //   break;
+    default:
+      break;
   }
 
   const products = await Product.find(filter)
@@ -118,6 +145,7 @@ export const get_products_of_brand = AsyncHandler(async (req, res) => {
     });
   }
 
+  const term = req.query.term || "";
   const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
   const limit = parseInt(req.query.limit) || 6; // Default to 6 items per page
   const sort = req.query.sort || "newest"; // Default to newest if not provided
@@ -138,18 +166,46 @@ export const get_products_of_brand = AsyncHandler(async (req, res) => {
       }),
     ...(storage && !ram && { "variants.storage": storage }),
     ...(ram && !storage && { "variants.ram": ram }),
+    ...(term && { name: { $regex: term, $options: "i" } }),
   };
   try {
     const totalProducts = await Product.countDocuments(filter);
     const totalPages = Math.ceil(totalProducts / limit);
 
-    const sortOptions = {
-      newest: { createdAt: -1 },
-      priceLowHigh: { price: 1 },
-      priceHighLow: { price: -1 },
-      discountHighLow: { discount: -1 },
-    };
-    const sortBy = sortOptions[sort] || sortOptions.newest;
+    const sortOptions = {};
+    switch (sort) {
+      case "featured":
+        sortOptions.isFeatured = -1;
+        break;
+      case "new-arrivals":
+        sortOptions.createdAt = -1;
+        break;
+      case "priceLowHigh":
+        sortOptions.price = 1;
+        break;
+      case "priceHighLow":
+        sortOptions.price = -1;
+        break;
+      case "discountHighLow":
+        sortOptions.discount = -1;
+        break;
+      case "name-asc":
+        sortOptions.name = 1;
+        break;
+      case "name-desc":
+        sortOptions.name = -1;
+        break;
+      // case "rating":
+      //   sortOptions.ratng = 1;
+      //   break;
+      // case "popularity":
+      //   sortOptions.popularity = 1;
+      //   break;
+      default:
+        break;
+    }
+
+    const sortBy = sortOptions[sort] || sortOptions.isFeatured;
 
     const products = await Product.find(filter)
       .populate("category")
@@ -191,6 +247,7 @@ export const get_listing_products_details = AsyncHandler(async (req, res) => {
   console.log("Received query params:", req.query);
 
   try {
+    const term = req.query.term || "";
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 6;
     const sort = req.query.sort || "newest";
@@ -221,12 +278,19 @@ export const get_listing_products_details = AsyncHandler(async (req, res) => {
       filter["variants.ram"] = { $in: req.query.ram.split(",") };
     }
 
+    if (term) {
+      filter["name"] = { $regex: term, $options: "i" };
+    }
+
     console.log("Applied filter:", filter);
 
     // Prepare sort object
     const sortObj = {};
     switch (sort) {
-      case "newest":
+      case "featured":
+        sortObj.isFeatured = -1;
+        break;
+      case "new-arrivals":
         sortObj.createdAt = -1;
         break;
       case "priceLowHigh":
@@ -238,6 +302,18 @@ export const get_listing_products_details = AsyncHandler(async (req, res) => {
       case "discountHighLow":
         sortObj.discount = -1;
         break;
+      case "name-asc":
+        sortObj.name = 1;
+        break;
+      case "name-desc":
+        sortObj.name = -1;
+        break;
+      // case "rating":
+      //   sortObj.ratng = 1;
+      //   break;
+      // case "popularity":
+      //   sortObj.popularity = 1;
+      //   break;
       default:
         break;
     }

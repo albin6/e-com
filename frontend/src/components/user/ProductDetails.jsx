@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useUserProduct, useUserProductsData } from "../../hooks/CustomHooks";
+import {
+  useUserProduct,
+  useUserProductsData,
+  useWishlistProduct,
+  useWishlistProductMutation,
+} from "../../hooks/CustomHooks";
 import {
   fetchProduct,
   fetchProductsDetails,
@@ -26,7 +31,14 @@ import { useMouseOverZoom } from "../../hooks/useMouseOverZoom";
 import ProductCard from "./ProductCard";
 import { axiosInstance } from "../../config/axiosInstance";
 import ReviewRating from "./ReviewRating";
+
 import { fetchProductExistence } from "../../utils/util-func/fetchProductExistence";
+import {
+  addProductToWishlist,
+  productExistence,
+  removeFromWishlist,
+} from "../../utils/wishlist/wishlistCRUD";
+import { toast } from "react-toastify";
 
 // Corrected useMouseOverZoom hook
 
@@ -34,6 +46,7 @@ function ProductDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data: product, isLoading, error } = useUserProduct(fetchProduct(id));
+
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedRam, setSelectedRam] = useState("");
   const [selectedStorage, setSelectedStorage] = useState("");
@@ -42,6 +55,16 @@ function ProductDetails() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [products, setProducts] = useState([]);
   const [isProductExists, setIsProductExists] = useState(false);
+  const [isProductExistsInWishlist, setIsProductExistsInWishlist] =
+    useState(false);
+
+  const { mutate: addToWishList } =
+    useWishlistProductMutation(addProductToWishlist);
+
+  const { mutate: removeProduct } =
+    useWishlistProductMutation(removeFromWishlist);
+
+  const { data: forChecking } = useWishlistProduct();
 
   const { data } = useUserProductsData(fetchProductsDetails);
   useEffect(() => {
@@ -134,9 +157,13 @@ function ProductDetails() {
   const addProductToCart = async (selectedVariant) => {
     try {
       console.log(selectedVariant);
+      console.log(product);
       const response = await axiosInstance.post("/api/users/cart", {
         selectedVariant,
         product,
+      });
+      toast.success("Product added to cart", {
+        position: "top-center",
       });
       console.log("product added to cart", response);
       setIsProductExists(true);
@@ -165,11 +192,6 @@ function ProductDetails() {
     }
   }, []);
 
-  const addToWishlist = (currentVariant) => {
-    console.log("in add to wishlist=>", product);
-    console.log(currentVariant);
-  };
-
   const checkAddToCart = () => {
     if (isProductExists) {
       navigate("/cart");
@@ -179,10 +201,16 @@ function ProductDetails() {
   };
 
   const selectedVariant = getSelectedVariant();
+
   const averageRating =
     product?.reviews.reduce((acc, review) => acc + review.rating, 0) /
     product?.reviews.length;
-  console.log(selectedVariant);
+
+  const handleProductCheckout = () => {
+    console.log("buy now clicked");
+    console.log(id);
+    navigate(`/checkout?productId=${id}&currVariant=${selectedVariant.sku}`);
+  };
 
   useEffect(() => {
     const response = fetchProductExistence(selectedVariant, product?._id);
@@ -194,6 +222,18 @@ function ProductDetails() {
       }
     });
   }, [selectedVariant, product?._id]);
+
+  useEffect(() => {
+    const isExists = productExistence({
+      product: product?._id,
+      variant: selectedVariant?.sku,
+    });
+
+    isExists.then((data) => {
+      console.log("product ondoooo????", isExists);
+      setIsProductExistsInWishlist(data);
+    });
+  }, [forChecking, selectedVariant, product]);
 
   if (isLoading)
     return (
@@ -215,7 +255,7 @@ function ProductDetails() {
     );
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-4 md:p-8">
-      <nav className="mb-6 ml-44">
+      <nav className="mb-6 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <ul className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
           <li>
             <Link to={"/"}>Home</Link>
@@ -226,7 +266,6 @@ function ProductDetails() {
           <li>{product.brand.name}</li>
         </ul>
       </nav>
-      {/* <div ref={cursorRef} className="border absolute z-30" /> */}
       <canvas
         ref={targetRef}
         width="200"
@@ -236,7 +275,7 @@ function ProductDetails() {
           display: isActive ? "block" : "none",
         }}
       />
-      <div className="grid gap-8 lg:grid-cols-2 mx-32">
+      <div className="grid gap-8 lg:grid-cols-2 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="space-y-6 max-w-[750px] mx-auto">
           {selectedVariant && (
             <Card className="overflow-hidden">
@@ -254,7 +293,7 @@ function ProductDetails() {
                   variant="outline"
                   size="icon"
                   onClick={prevImage}
-                  className="absolute rounded-full bg-white/80 hover:bg-white left-0 top-80"
+                  className="absolute rounded-full bg-white/80 hover:bg-white left-2 top-1/2 transform -translate-y-1/2"
                 >
                   <ChevronLeft className="h-6 w-6" />
                 </Button>
@@ -262,7 +301,7 @@ function ProductDetails() {
                   variant="outline"
                   size="icon"
                   onClick={nextImage}
-                  className="absolute rounded-full bg-white/80 hover:bg-white right-0 top-80"
+                  className="absolute rounded-full bg-white/80 hover:bg-white right-2 top-1/2 transform -translate-y-1/2"
                 >
                   <ChevronRight className="h-6 w-6" />
                 </Button>
@@ -275,7 +314,7 @@ function ProductDetails() {
                 <Button
                   key={index}
                   variant="outline"
-                  className="w-20 h-20 p-0 rounded-lg overflow-hidden"
+                  className="w-16 h-16 sm:w-20 sm:h-20 p-0 rounded-lg overflow-hidden"
                   onClick={() => setCurrentImageIndex(index)}
                 >
                   <img
@@ -293,10 +332,10 @@ function ProductDetails() {
 
         <div className="space-y-6 max-w-[750px] mx-auto">
           <div>
-            <h1 className="text-3xl font-bold mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
               <span>{product.name} </span>
               {selectedVariant && (
-                <span className="text-lg text-gray-600">
+                <span className="text-base sm:text-lg text-gray-600">
                   ({selectedVariant.ram} RAM, {selectedVariant.storage},{" "}
                   {selectedVariant.color})
                 </span>
@@ -319,7 +358,7 @@ function ProductDetails() {
             )}
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-gray-900">
                 {averageRating.toFixed(1)}
@@ -342,10 +381,39 @@ function ProductDetails() {
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" size="icon">
-                <Heart
-                  className="h-6 w-6"
-                  onClick={() => addToWishlist(selectedVariant)}
-                />
+                {isProductExistsInWishlist ? (
+                  <Heart
+                    className="h-6 w-6 fill-red-600 stroke-none"
+                    onClick={() =>
+                      removeProduct(
+                        {
+                          productId: product._id,
+                          variant: selectedVariant.sku,
+                        },
+                        {
+                          onSuccess: () =>
+                            toast.warn("Product Removed From Wishlist"),
+                        }
+                      )
+                    }
+                  />
+                ) : (
+                  <Heart
+                    className="h-6 w-6"
+                    onClick={() =>
+                      addToWishList(
+                        {
+                          product: product._id,
+                          variant: selectedVariant.sku,
+                        },
+                        {
+                          onSuccess: () =>
+                            toast.success("Product Added to Wishlist"),
+                        }
+                      )
+                    }
+                  />
+                )}
               </Button>
               <Button variant="ghost" size="icon">
                 <Share2 className="h-6 w-6" />
@@ -354,25 +422,26 @@ function ProductDetails() {
           </div>
 
           <div className="bg-white p-4 rounded-lg shadow-sm">
-            <span className="text-3xl font-bold text-gray-900">
-              ₹{selectedVariant.price.toLocaleString()}.00
+            <span className="text-2xl sm:text-3xl font-bold text-gray-900">
+              ₹
+              {selectedVariant &&
+                (
+                  selectedVariant.price -
+                  (selectedVariant.price * product.discount) / 100
+                ).toFixed(2)}
+              .00
             </span>
             <span className="text-sm text-gray-600 ml-2">
               (Incl. all Taxes)
             </span>
             <div className="text-sm text-gray-600 mt-1">
               <span className="line-through">
-                MRP: ₹
-                {(selectedVariant.price / (1 - product.discount / 100)).toFixed(
-                  2
-                )}
+                MRP: ₹{selectedVariant && selectedVariant.price}
               </span>
               <span className="text-green-600 ml-2">
                 (Save ₹
-                {(
-                  selectedVariant.price / (1 - product.discount / 100) -
-                  selectedVariant.price
-                ).toFixed(2)}
+                {selectedVariant &&
+                  ((selectedVariant.price * product.discount) / 100).toFixed(2)}
                 , {product.discount}% off)
               </span>
             </div>
@@ -398,7 +467,7 @@ function ProductDetails() {
           <Card>
             <CardContent className="p-4">
               <h2 className="font-bold text-lg mb-3">Key Features</h2>
-              <ul className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
                 <li>
                   <span className="font-semibold">Display:</span>{" "}
                   {product.specifications.display.size},{" "}
@@ -450,7 +519,7 @@ function ProductDetails() {
                       />
                       <Label
                         htmlFor={`color-${color}`}
-                        className="flex items-center justify-center px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-gray-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
+                        className="flex items-center justify-center px-3 py-1 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-gray-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
                       >
                         {color}
                       </Label>
@@ -476,7 +545,7 @@ function ProductDetails() {
                     />
                     <Label
                       htmlFor={`ram-${ram}`}
-                      className="flex items-center justify-center px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-gray-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
+                      className="flex items-center justify-center px-3 py-1 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-gray-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
                     >
                       {ram}
                     </Label>
@@ -501,7 +570,7 @@ function ProductDetails() {
                     />
                     <Label
                       htmlFor={`storage-${storage}`}
-                      className="flex items-center justify-center px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-gray-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
+                      className="flex items-center justify-center px-3 py-1 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm bg-gray-100 text-gray-800 peer-data-[state=checked]:bg-gray-600 peer-data-[state=checked]:text-white hover:bg-gray-200 transition-colors"
                     >
                       {storage}
                     </Label>
@@ -513,11 +582,12 @@ function ProductDetails() {
 
           <div>
             <h2 className="font-bold text-lg mb-2">Description</h2>
-            <p className="text-sm text-gray-600">{product.description}</p>
+            <p className="text-sm  text-gray-600">{product.description}</p>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <Button
+              onClick={handleProductCheckout}
               className={`flex-1 bg-gray-600 hover:bg-gray-700 text-white ${
                 selectedVariant?.stock == 0 ? "cursor-not-allowed" : ""
               }`}

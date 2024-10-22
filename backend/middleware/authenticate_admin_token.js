@@ -1,9 +1,6 @@
 import jwt from "jsonwebtoken";
 
 export const authenticate_admin_token = (req, res, next) => {
-  console.log("admin auth middleware");
-  console.log(req.headers);
-
   const authHeader = req.headers["authorization"];
   if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
     return res
