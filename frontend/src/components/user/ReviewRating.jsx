@@ -87,7 +87,7 @@ export default function Component() {
         </div>
       </div>
 
-      <div className="mt-6 sm:mt-8 grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+      {/* <div className="mt-6 sm:mt-8 grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
         {[...Array(8)].map((_, i) => (
           <div
             key={i}
@@ -100,7 +100,7 @@ export default function Component() {
             />
           </div>
         ))}
-      </div>
+      </div> */}
 
       <div className="mt-6 sm:mt-8 space-y-6">
         {[

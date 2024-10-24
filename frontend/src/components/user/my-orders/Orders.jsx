@@ -3,6 +3,7 @@ import OrderCard from "./OrderCard";
 import { axiosInstance } from "../../../config/axiosInstance";
 import { useAllOrders } from "../../../hooks/CustomHooks";
 import { getOrdersUser } from "../../../utils/order/orderCRUD";
+import NoOrdersFound from "./NoOrdersFoundUser";
 
 export default function Component() {
   const [orders, setOrders] = useState([]);
@@ -12,6 +13,10 @@ export default function Component() {
   useEffect(() => {
     setOrders(data);
   }, [data]);
+
+  if (data && data.length == 0) {
+    return <NoOrdersFound />;
+  }
 
   return (
     <div className="container mx-auto p-4 space-y-4">

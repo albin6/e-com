@@ -4,11 +4,22 @@ import { file_path_extractor } from "../utils/multer/file_path_extractor.js";
 
 // GET /api/admin/brands
 export const get_all_brands = AsyncHandler(async (req, res) => {
-  const brands = await Brand.find({}, { updated_at: false, created_at: false });
+  const { page, limit } = req.query;
+  const skip = (page - 1) * limit;
+
+  const total_brand_count = await Brand.countDocuments(
+    {},
+    { updated_at: false, created_at: false }
+  );
+  const totalPages = Math.ceil(total_brand_count / limit);
+
+  const brands = await Brand.find({}, { updated_at: false, created_at: false })
+    .skip(skip)
+    .limit(limit);
   if (brands.length === 0) {
     res.json({ message: "database is empty", brands: [] });
   }
-  return res.json({ success: true, brands });
+  return res.json({ success: true, page, totalPages, brands });
 });
 
 // POST /api/admin/brands
@@ -21,7 +32,7 @@ export const add_new_brand = AsyncHandler(async (req, res) => {
   const brand = await Brand.findOne({ name });
 
   if (brand) {
-    res
+    return res
       .status(409)
       .json({ success: false, message: "Brand with the name already exists" });
   }

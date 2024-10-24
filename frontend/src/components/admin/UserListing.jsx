@@ -5,8 +5,18 @@ import AdminBlockUserModal from "./AdminBlockUserModal";
 import { useDispatch } from "react-redux";
 import { logoutUser } from "../../redux/Slices/userSlice";
 import { clearCookie } from "../../utils/clearCookie/clearCookie";
+import Pagination from "../user/Pagination";
 
 export default function UserListing() {
+  // ===========================================================================
+  // ========================== for pagination =================================
+  const itemsPerPage = 2;
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // ===========================================================================
   const dispatch = useDispatch();
   const [usersList, setUsersList] = useState([]);
   const [filteredUserList, setFilteredUserList] = useState([]);
@@ -16,12 +26,14 @@ export default function UserListing() {
   const [currentUserStatus, setUserCurrentStatus] = useState(null);
 
   useEffect(() => {
-    fetchUsers()
-      .then((users) => {
-        setUsersList(users);
+    fetchUsers(currentPage, itemsPerPage)
+      .then((data) => {
+        setUsersList(data.users);
+        setCurrentPage(data.page);
+        setTotalPages(data.totalPages);
       })
       .catch((err) => console.log(err));
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     setFilteredUserList(usersList);
@@ -110,6 +122,11 @@ export default function UserListing() {
           ))}
         </tbody>
       </table>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        paginate={paginate}
+      />
       <AdminBlockUserModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

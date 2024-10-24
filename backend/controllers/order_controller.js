@@ -200,16 +200,27 @@ export const cancel_order = AsyncHandler(async (req, res) => {
 export const get_all_orders = AsyncHandler(async (req, res) => {
   console.log("in get_all_orders");
 
+  const { page = 1, limit = 10 } = req.query;
+  const skip = (page - 1) * limit;
+
   try {
+    const totalOrdersCount = await Order.countDocuments({});
+
+    // Fetch orders with pagination
     const orders = await Order.find({})
       .populate({
         path: "user",
-        select: "first_name last_name", // Only select the fields you need from the user
+        select: "first_name last_name",
       })
       .populate({
         path: "order_items.product",
-        select: "name variants", // Include product name and variants
-      });
+        select: "name variants",
+      })
+      .sort({ placed_at: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const totalPages = Math.ceil(totalOrdersCount / limit);
 
     const formattedOrders = orders.map((order) => {
       return {
@@ -217,7 +228,6 @@ export const get_all_orders = AsyncHandler(async (req, res) => {
         order_items: order.order_items.map((item) => {
           const product = item.product;
 
-          // Find the matching variant based on the color from order item
           const variantDetails = product.variants.find(
             (variant) =>
               variant.sku === item.variant || variant.color === item.variant
@@ -239,10 +249,11 @@ export const get_all_orders = AsyncHandler(async (req, res) => {
         _id: order._id,
         order_status: order.order_status,
         payment_status: order.payment_status,
-        placed_at: format_date(order.placed_at), // Assuming format_date is a function to format the date
+        placed_at: order.placed_at,
       };
     });
-    res.json({ success: true, orders: formattedOrders });
+
+    res.json({ success: true, totalPages, page, orders: formattedOrders });
   } catch (error) {
     console.error("Error in get_all_orders:", error);
     res.status(500).json({ success: false, message: "Failed to fetch orders" });

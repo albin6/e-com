@@ -30,9 +30,10 @@ import OrderDetailsPage from "./pages/user/OrderDetailsPage";
 import ResetPassword from "./pages/user/ResetPassword";
 import CartPage from "./pages/user/CartPage";
 import CheckoutPage from "./pages/user/CheckoutPage";
-import ProductListingWithAdvancedSearchAndFilter from "./components/user/ProductListingWithAdvancedSearchAndFilters";
 import OrderManagementPage from "./pages/admin/OrderManagementPage";
 import CouponManagementPage from "./pages/admin/CouponManagementPage";
+import ContactPage from "./pages/user/ContactPage";
+import AboutPage from "./pages/user/AboutPage";
 
 function AppLayout() {
   const admin = useSelector((state) => state.admin.adminInfo);
@@ -140,15 +141,8 @@ function AppLayout() {
           </RequireAuthentication>
         }
       />
-
-      <Route
-        path="/test"
-        element={
-          <RequireAuthentication>
-            <ProductListingWithAdvancedSearchAndFilter />
-          </RequireAuthentication>
-        }
-      />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/about" element={<AboutPage />} />
 
       {/* --------------------------------------------------- */}
       {/* --------------------   admin    ------------------- */}

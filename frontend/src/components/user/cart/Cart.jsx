@@ -12,6 +12,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { stockContext } from "../../../pages/user/CartPage";
+import NoProductFound from "../NoProductFound";
+import CartLoadingFallback from "./CartLoadingFallback";
 
 const Cart = () => {
   const { stock } = useContext(stockContext);
@@ -46,12 +48,13 @@ const Cart = () => {
   };
 
   if (isLoading) {
-    return <h2>Loading...</h2>;
+    return <CartLoadingFallback />;
   }
 
   if (isError) {
-    return <h2>Error...</h2>;
+    return <NoProductFound />;
   }
+
   let subtotal;
   if (cart?.items) {
     subtotal = cart?.items.reduce(
@@ -84,13 +87,13 @@ const Cart = () => {
               />
             ))
           ) : (
-            <div className="h-3/5  flex justify-center items-center font-medium text-xl">
-              No prodcuts in cart!
+            <NoProductFound />
+          )}
+          {cart?.items && cart?.items.length > 0 && (
+            <div className="text-right font-semibold text-xl mt-4">
+              Total: ₹{total.toFixed(2)}
             </div>
           )}
-          <div className="text-right font-semibold text-xl mt-4">
-            Total: ₹{total.toFixed(2)}
-          </div>
         </div>
 
         <div className="lg:w-1/3 mt-8 lg:mt-0">
