@@ -1,8 +1,13 @@
 import { adminAxiosInstance } from "../../config/axiosInstance";
 
-export const fetchCategories = async () => {
-  const response = await adminAxiosInstance.get("/api/admin/categories");
-  return response.data.categories_data;
+export const fetchCategories = async (currentPage, itemsPerPage) => {
+  const response = await adminAxiosInstance.get("/api/admin/categories", {
+    params: {
+      page: currentPage,
+      limit: itemsPerPage,
+    },
+  });
+  return response.data;
 };
 
 export const submitCategoryForm = async (newCategory) => {

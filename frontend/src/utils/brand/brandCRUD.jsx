@@ -1,9 +1,14 @@
 import { adminAxiosInstance } from "../../config/axiosInstance";
 
-export const getBrandList = async () => {
-  const response = await adminAxiosInstance.get("/api/admin/brands");
+export const getBrandList = async (currentPage, itemsPerPage) => {
+  const response = await adminAxiosInstance.get("/api/admin/brands", {
+    params: {
+      page: currentPage,
+      limit: itemsPerPage,
+    },
+  });
   console.log(response.data);
-  return response.data.brands;
+  return response.data;
 };
 
 export const addNewBrand = async (brand) => {

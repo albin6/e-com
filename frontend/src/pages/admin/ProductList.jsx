@@ -1,7 +1,7 @@
 import React from "react";
-import ProductListing from "../../components/admin/ProductListing";
 import Header from "../../components/admin/Header";
 import Sidebar from "../../components/admin/Sidebar";
+import ProductListingWithAddProductButton from "../../components/admin/ProductListingWithAddProductButton";
 
 function ProductList() {
   return (
@@ -10,7 +10,7 @@ function ProductList() {
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
         <div className="container mx-auto p-4">
-          <ProductListing />
+          <ProductListingWithAddProductButton />
         </div>
       </div>
     </div>

@@ -28,10 +28,15 @@ export const getOrderDetails = (orderId) => {
 };
 
 // ============================================================================
-export const getOrders = async () => {
-  const response = await adminAxiosInstance.get("/api/admin/orders");
-  console.log(response);
-  return response.data.orders;
+export const getOrders = async ({ currentPage, itemsPerPage }) => {
+  const response = await adminAxiosInstance.get("/api/admin/orders", {
+    params: {
+      page: currentPage,
+      limit: itemsPerPage,
+    },
+  });
+  console.log(response.data);
+  return response.data;
 };
 
 export const getOrdersUser = async () => {

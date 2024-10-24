@@ -15,13 +15,17 @@ import {
   compare_password,
 } from "../utils/secure-password/password-bcrypt.js";
 import { set_token } from "../utils/jwt/setCookie.js";
+import bcrypt from "bcrypt";
 
 // Registering a new user
 // POST /api/users/signup
 export const register = AsyncHandler(async (req, res) => {
   console.log(req.body);
   const { first_name, last_name, email, phone_number, password } = req.body;
+  console.log(req.body);
   const is_user_exists = await User.findOne({ email });
+
+  console.log(is_user_exists);
 
   if (!is_user_exists) {
     const hashed_password = await hash_password(password);
@@ -140,7 +144,7 @@ export const send_otp = AsyncHandler(async (req, res) => {
   const is_user_exists = await User.findOne({ email: data.email });
   console.log(is_user_exists);
 
-  if (is_user_exists) {
+  if (!is_user_exists) {
     const otp = generateOTP();
     console.log(otp);
 
@@ -180,58 +184,6 @@ export const send_otp = AsyncHandler(async (req, res) => {
 
 // ===========================================================================================
 // ===========================================================================================
-// generate an otp
-// POST /api/user/send-verification-otp
-export const forgot_password_send_otp = AsyncHandler(async (req, res) => {
-  if (!req.user || !req.user.id) {
-    return res
-      .status(401)
-      .json({ success: false, message: "User not authenticated" });
-  }
-
-  const curr_user = await User.findOne({
-    _id: req.user.id,
-    email: req.body.email.trim(),
-  });
-
-  if (!curr_user) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Wrong email or user not found" });
-  }
-
-  const otp = generateOTP();
-
-  // Save the OTP to the database
-  await OTP.create({
-    email: curr_user.email,
-    otp,
-  });
-
-  // Send the OTP to the user's email
-  send_verification_email(curr_user.email, otp);
-  res.json({ success: true, message: "OTP sent successfully" });
-
-  let intervalId;
-
-  const deleteExpiredOTPs = async () => {
-    const now = new Date();
-    const result = await OTP.deleteMany({
-      createdAt: { $lte: new Date(now.getTime() - 60 * 1000) }, // 1 minute ago
-    });
-
-    // If no OTPs were deleted, stop the interval
-    if (result.deletedCount === 0) {
-      clearInterval(intervalId);
-      console.log("No expired OTPs found. Stopping the interval.");
-    } else {
-      console.log(`${result.deletedCount} expired OTP(s) deleted.`);
-    }
-  };
-
-  // Start the interval when needed
-  intervalId = setInterval(deleteExpiredOTPs, 5000);
-});
 
 // POST /api/users/verify-otp
 export const verify_otp = AsyncHandler(async (req, res) => {
@@ -276,6 +228,26 @@ export const reset_password = AsyncHandler(async (req, res) => {
 });
 
 // ==================================================================================
+
+// POST /api/users/check-current-password
+export const check_current_password = AsyncHandler(async (req, res) => {
+  const { password } = req.body;
+  const user_id = req.user.id;
+
+  console.log("check_current_password =>>>", password, user_id);
+
+  const user = await User.findById(user_id);
+
+  const match = await bcrypt.compare(password, user.password);
+
+  if (match) {
+    res.json({ success: true, message: "Current password is correct." });
+  } else {
+    res
+      .status(400)
+      .json({ success: false, message: "Current password is incorrect." });
+  }
+});
 
 // POST /api/users/reset-the-password
 export const reset_the_password = AsyncHandler(async (req, res) => {

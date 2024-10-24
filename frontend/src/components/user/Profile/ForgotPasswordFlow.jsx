@@ -2,63 +2,18 @@ import React, { useState } from "react";
 
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import EmailEntry from "./EmailEntry";
-import OTPVerification from "./OTPVerification";
 import NewPassword from "./NewPassword";
 import { axiosInstance } from "../../../config/axiosInstance";
 
 import { toast } from "react-toastify";
+import CurrentPassword from "./CurrentPassword";
 
 export default function ForgotPasswordFlow() {
   const navigate = useNavigate();
-  const [step, setStep] = useState("email");
-  const [email, setEmail] = useState("");
-
-  const handleEmailSubmit = async (submittedEmail) => {
-    // Here you would typically call an API to send the OTP
-    console.log("Sending OTP to:", submittedEmail);
-    setEmail(submittedEmail);
-    try {
-      const response = await axiosInstance.post(
-        "/api/users/send-verification-otp",
-        {
-          email: submittedEmail,
-        }
-      );
-      setStep("otp");
-      toast.success("OTP sent successfully. Please check your email.", {
-        position: "top-center",
-      });
-    } catch (error) {
-      toast.error(error.response.data.message, {
-        position: "top-center",
-      });
-      console.log(error);
-    }
-  };
-
-  const handleOTPVerify = async (otp) => {
-    // Here you would typically call an API to verify the OTP
-    console.log("Verifying OTP:", otp);
-    try {
-      // Here you would typically send the OTP to your backend for verification
-      const response = await axiosInstance.post("/api/users/verify-otp", {
-        otp,
-        email,
-      });
-      console.log(response?.data);
-      setStep("newPassword");
-    } catch (error) {
-      toast.error(error.response.data.message, {
-        position: "top-center",
-      });
-      console.error("Error verifying OTP:", error);
-    }
-  };
+  const [step, setStep] = useState("currentPassword");
 
   const handlePasswordReset = async (password) => {
     // Here you would typically call an API to reset the password
-    console.log("Resetting password for:", email);
     try {
       // Send the new password to the backend API
 
@@ -68,7 +23,7 @@ export default function ForgotPasswordFlow() {
           password,
         }
       );
-      toast.success("Password reset successfully", {
+      toast.success(response.data.message, {
         position: "top-center",
       });
       setTimeout(() => navigate("/profile"), 1000);
@@ -78,20 +33,22 @@ export default function ForgotPasswordFlow() {
     // Redirect to login page or show success message
   };
 
-  const handleOTPResend = async () => {
+  const handleCurrentPasswordSubmit = async (currentPassword) => {
     try {
       const response = await axiosInstance.post(
-        "/api/users/send-verification-otp",
+        "/api/users/check-current-password",
         {
-          email,
+          password: currentPassword,
         }
       );
-      if (response.data.success) {
-        toast.success("OTP sent successfully. Please check your email.", {
-          position: "top-center",
-        });
-      }
+      toast.success(response.data.message, {
+        position: "top-center",
+      });
+      setStep("newPassword");
     } catch (error) {
+      toast.error(error.response.data.message, {
+        position: "top-center",
+      });
       console.log(error);
     }
   };
@@ -109,13 +66,8 @@ export default function ForgotPasswordFlow() {
             Back to Profile
           </Link>
         </div>
-        {step === "email" && <EmailEntry onSubmit={handleEmailSubmit} />}
-        {step === "otp" && (
-          <OTPVerification
-            onVerify={handleOTPVerify}
-            email={email}
-            onResendOTP={handleOTPResend}
-          />
+        {step === "currentPassword" && (
+          <CurrentPassword onSubmit={handleCurrentPasswordSubmit} />
         )}
         {step === "newPassword" && (
           <NewPassword onSubmit={handlePasswordReset} />

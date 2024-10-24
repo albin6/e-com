@@ -3,13 +3,26 @@ import Category from "../models/categoryModel.js";
 
 // GET /api/admin/categories
 export const get_all_categories = AsyncHandler(async (req, res) => {
-  const categories_data = await Category.find(
+  const { page = 1, limit = 10 } = req.query;
+  const skip = (page - 1) * limit;
+
+  console.log(req.query);
+
+  const total_category_count = await Category.countDocuments(
     {},
     { createdAt: false, updatedAt: false }
   );
+  const totalPages = Math.ceil(total_category_count / limit);
+
+  const categories_data = await Category.find(
+    {},
+    { createdAt: false, updatedAt: false }
+  )
+    .skip(skip)
+    .limit(limit);
 
   console.log("in get all categories => ", categories_data);
-  res.json({ success: true, categories_data });
+  res.json({ success: true, page, totalPages, categories_data });
 });
 
 // POST /api/admin/categories
@@ -17,7 +30,9 @@ export const add_new_category = AsyncHandler(async (req, res) => {
   console.log(req.body);
   const { title, status, description } = req.body;
 
-  const is_category_exists = await Category.findOne({ title });
+  const is_category_exists = await Category.findOne({
+    title: { $regex: new RegExp(`^${title}$`, "i") },
+  });
 
   if (is_category_exists) {
     return res.status(409).json({ message: "Category Already Exists" });

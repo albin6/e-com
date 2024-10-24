@@ -7,8 +7,8 @@ import {
   reset_password,
   logout,
   new_access_token_generate,
-  forgot_password_send_otp,
   reset_the_password,
+  check_current_password,
 } from "../controllers/user_controller.js";
 import {
   get_all_products_details,
@@ -127,10 +127,10 @@ user_router
   .put(authenticate_user_token, normalizeUserMiddleware, update_user_info);
 
 user_router.post(
-  "/send-verification-otp",
+  "/check-current-password",
   authenticate_user_token,
   normalizeUserMiddleware,
-  forgot_password_send_otp
+  check_current_password
 );
 
 user_router.post(

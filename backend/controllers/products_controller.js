@@ -6,47 +6,50 @@ import Product from "../models/productModel.js";
 // desc => for listing products
 // GET /api/admin/products
 export const get_products_details = AsyncHandler(async (req, res) => {
-  try {
-    // Fetch all products with populated category and brand details
-    const products = await Product.find()
-      .populate("category")
-      .populate("brand");
+  const { page, limit } = req.query;
+  const skip = (page - 1) * limit;
 
-    // Fetch all categories
-    const categories = await Category.find({ status: true });
-    if (!categories) {
-      return res
-        .status(500)
-        .json({ success: false, message: "Failed to fetch categories" });
-    }
+  const total_product_count = await Product.countDocuments();
 
-    // Fetch all brands
-    const brands = await Brand.find({ status: true });
-    if (!brands) {
-      return res
-        .status(500)
-        .json({ success: false, message: "Failed to fetch brands" });
-    }
+  const totalPages = Math.ceil(total_product_count / limit);
 
-    // Check if products exist
-    if (!products.length) {
-      return res.status(404).json({
-        success: true,
-        message: "No products found",
-      });
-    }
+  // Fetch all products with populated category and brand details
+  const products = await Product.find()
+    .populate("category")
+    .populate("brand")
+    .skip(skip)
+    .limit(limit);
 
-    // If everything is successful, return the data
-    res.status(200).json({ success: true, products, brands, categories });
-  } catch (error) {
-    // Catch any other errors and return a 500 status code
-    console.error("Error fetching product details:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error while fetching product details",
-      error: error.message,
+  // Fetch all categories
+  const categories = await Category.find({ status: true });
+  if (!categories) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch categories" });
+  }
+
+  // Fetch all brands
+  const brands = await Brand.find({ status: true });
+  if (!brands) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch brands" });
+  }
+
+  // Check if products exist
+  if (!products.length) {
+    return res.status(200).json({
+      success: true,
+      message: "No Products Found",
+      brands,
+      categories,
     });
   }
+
+  // If everything is successful, return the data
+  res
+    .status(200)
+    .json({ success: true, page, totalPages, products, brands, categories });
 });
 
 // desc => for users home page

@@ -78,13 +78,26 @@ export const admin_logout = AsyncHandler(async (req, res) => {
 // GET /api/admin/users-list
 export const get_users_list = AsyncHandler(async (req, res) => {
   console.log("in get users list : req.user =>", req.user);
-  const users_list = await User.find(
+
+  const { page = 1, limit = 10 } = req.query;
+  const skip = (page - 1) * limit;
+
+  const total_users_count = await User.countDocuments(
     {},
-    { password: false, created_on: false }
+    {
+      password: false,
+      created_on: false,
+    }
   );
+
+  const totalPages = Math.ceil(total_users_count / limit);
+
+  const users_list = await User.find({}, { password: false, created_on: false })
+    .skip(skip)
+    .limit(limit);
   console.log("In get users list => usersList:", users_list);
 
-  res.json({ success: true, users: users_list });
+  res.json({ success: true, page, totalPages, users: users_list });
 });
 
 // patch /api/admin/users-list

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Switch } from "@headlessui/react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -7,16 +7,48 @@ import {
   addNewBrand,
   updateBrandStatus,
   updateBrand,
+  getBrandList,
 } from "../../utils/brand/brandCRUD";
+import { toast } from "react-toastify";
+import ConfirmationModal from "./ConfirmationModal";
+import Pagination from "../user/Pagination";
 
 const BrandManagement = () => {
-  const { data, isError, isLoading } = useBrandList();
+  // ===========================================================================
+  // ========================== for pagination =================================
+  const itemsPerPage = 4;
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // ===========================================================================
+  const { data, isError } = useBrandList(
+    getBrandList,
+    currentPage,
+    itemsPerPage
+  );
   const { mutate: addBrand } = useBrandListMutation(addNewBrand);
   const { mutate: updateStatus } = useBrandListMutation(updateBrandStatus);
   const { mutate: updateBrandDetails } = useBrandListMutation(updateBrand);
-  const [brands, setBrands] = useState([]);
   const [editingBrand, setEditingBrand] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [orderId, setOrderId] = useState(null);
+  const [brands, setBrands] = useState([]);
+
+  useEffect(() => {
+    if (data) {
+      setBrands(data.brands);
+      setTotalPages(data.totalPages);
+      setCurrentPage(data.page);
+    }
+  }, [data]);
+
+  const handleConfirm = () => {
+    setIsConfirmationModalOpen(false);
+    updateStatus(orderId);
+  };
 
   const handleAddBrand = (values, { resetForm }) => {
     console.log(values);
@@ -25,7 +57,12 @@ const BrandManagement = () => {
       logo: values.logo,
       status: true,
     };
-    addBrand(brand);
+    addBrand(brand, {
+      onSuccess: () =>
+        toast.success("Brand Added Successfully!", { position: "top-center" }),
+      onError: () =>
+        toast.error("Brand already exists!", { position: "top-center" }),
+    });
     resetForm();
   };
 
@@ -46,10 +83,6 @@ const BrandManagement = () => {
     updateBrandDetails(formData);
     setIsModalOpen(false);
     setEditingBrand(null);
-  };
-
-  const toggleBrandListing = (id) => {
-    updateStatus(id);
   };
 
   // Validation Schema
@@ -152,7 +185,7 @@ const BrandManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {data?.map((brand) => (
+              {brands.map((brand) => (
                 <tr key={brand._id} className="border-b">
                   <td className="px-4 py-2">
                     <img
@@ -168,7 +201,10 @@ const BrandManagement = () => {
                     <div className="flex justify-center">
                       <Switch
                         checked={brand.status}
-                        onChange={() => toggleBrandListing(brand._id)}
+                        onChange={() => {
+                          setOrderId(brand._id);
+                          setIsConfirmationModalOpen(true);
+                        }}
                         className={`${
                           brand.status ? "bg-gray-800" : "bg-gray-200"
                         } relative inline-flex h-6 w-11 items-center rounded-full`}
@@ -198,6 +234,11 @@ const BrandManagement = () => {
           </table>
         </div>
       )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        paginate={paginate}
+      />
 
       {/* Edit Brand Modal */}
       {isModalOpen && editingBrand && (
@@ -266,6 +307,14 @@ const BrandManagement = () => {
             </Formik>
           </div>
         </div>
+      )}
+
+      {isConfirmationModalOpen && (
+        <ConfirmationModal
+          isOpen={isConfirmationModalOpen}
+          onClose={() => setIsConfirmationModalOpen(false)}
+          onConfirm={handleConfirm}
+        />
       )}
     </div>
   );

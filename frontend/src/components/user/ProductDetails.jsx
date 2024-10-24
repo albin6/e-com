@@ -176,6 +176,12 @@ function ProductDetails() {
     }
   };
 
+  const notifyStockout = () => {
+    toast.error("Product is out of stock", {
+      position: "top-center",
+    });
+  };
+
   const sourceRef = useRef(null);
   const targetRef = useRef(null);
   const cursorRef = useRef(null);
@@ -185,7 +191,7 @@ function ProductDetails() {
     sourceRef,
     targetRef,
     cursorRef,
-    50
+    80
   );
 
   useEffect(() => {
@@ -352,43 +358,18 @@ function ProductDetails() {
               )}
             </h1>
           </div>
-          <div>
+          <div className="flex justify-between">
             {(selectedVariant && selectedVariant?.stock == 0 && (
-              <p className="text-lg text-red-600">Stock out!!!</p>
+              <span className="text-lg text-red-600">Stock out!!!</span>
             )) ||
               (selectedVariant && selectedVariant?.stock <= 10 && (
-                <p className="text-lg text-red-600">
+                <span className="text-lg text-red-600">
                   Only {selectedVariant?.stock} left!!!
-                </p>
+                </span>
               ))}
             {selectedVariant && selectedVariant?.stock > 10 && (
-              <p className="text-lg text-green-600">
-                {selectedVariant?.stock} left
-              </p>
+              <span className="text-lg text-green-600">In Stock</span>
             )}
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-gray-900">
-                {averageRating.toFixed(1)}
-              </span>
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-5 h-5 ${
-                      i < Math.round(averageRating)
-                        ? "text-yellow-400 fill-current"
-                        : "text-gray-300"
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="text-sm text-gray-600">
-                ({product.reviews.length} Ratings)
-              </span>
-            </div>
             <div className="flex gap-2">
               <Button variant="ghost" size="icon">
                 {isProductExistsInWishlist ? (
@@ -439,7 +420,6 @@ function ProductDetails() {
                   selectedVariant.price -
                   (selectedVariant.price * product.discount) / 100
                 ).toFixed(2)}
-              .00
             </span>
             <span className="text-sm text-gray-600 ml-2">
               (Incl. all Taxes)
@@ -496,7 +476,7 @@ function ProductDetails() {
                 </li>
                 <li>
                   <span className="font-semibold">Camera:</span>{" "}
-                  {product.specifications.camera.rear} Rear,{" "}
+                  {product.specifications.camera.rear},{" "}
                   {product.specifications.camera.front} Front
                 </li>
                 <li>
@@ -597,20 +577,22 @@ function ProductDetails() {
 
           <div className="flex flex-col sm:flex-row gap-4">
             <Button
-              onClick={handleProductCheckout}
-              className={`flex-1 bg-gray-600 hover:bg-gray-700 text-white ${
-                selectedVariant?.stock == 0 ? "cursor-not-allowed" : ""
-              }`}
+              onClick={
+                selectedVariant?.stock == 0
+                  ? notifyStockout
+                  : handleProductCheckout
+              }
+              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white"
             >
               Buy Now
             </Button>
 
             <Button
-              onClick={checkAddToCart}
+              onClick={
+                selectedVariant?.stock == 0 ? notifyStockout : checkAddToCart
+              }
               variant="outline"
-              className={`flex-1 border-gray-600 text-gray-600 hover:bg-blue-50 ${
-                selectedVariant?.stock == 0 ? "cursor-not-allowed" : ""
-              }`}
+              className="flex-1 border-gray-600 text-gray-600 hover:bg-blue-50"
             >
               {isProductExists ? "Goto Cart" : "Add to Cart"}
             </Button>
@@ -634,9 +616,11 @@ function ProductDetails() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 sm:gap-8">
             {products &&
-              products.map((product) => (
-                <ProductCard key={product._id} product={product} />
-              ))}
+              products
+                .slice(0, 5)
+                .map((product) => (
+                  <ProductCard key={product._id} product={product} />
+                ))}
           </div>
         </Link>
       </section>

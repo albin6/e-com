@@ -8,9 +8,11 @@ import {
 } from "../../../hooks/CustomHooks";
 import { cancelOrder, getOrderDetails } from "../../../utils/order/orderCRUD";
 
-const OrderDetails = () => {
+const OrderDetails = ({ orderId: propsOrderId }) => {
   const naviagate = useNavigate();
-  const { orderId } = useParams();
+  const { orderId: paramsOrderId } = useParams();
+
+  const orderId = propsOrderId || paramsOrderId;
 
   const { data: order_data } = useOrderDetails(getOrderDetails(orderId));
   const { mutate: cancel_order } = useOrderDetailsMutation(cancelOrder);
@@ -51,42 +53,49 @@ const OrderDetails = () => {
 
   return (
     <div className="container w-2/3 mx-auto px-4 py-8">
-      <nav className="text-sm mb-4">
-        <ol className="list-none p-0 inline-flex">
-          <li className="flex items-center">
-            <Link to={"/"} className="text-gray-500 hover:text-gray-700">
-              Home
-            </Link>
-            <span className="mx-2">/</span>
-          </li>
-          <li className="flex items-center">
-            <Link to={"/profile"} className="text-gray-500 hover:text-gray-700">
-              Account
-            </Link>
-            <span className="mx-2">/</span>
-          </li>
-          <li onClick={() => naviagate(-1)} className="flex items-center">
-            <Link className="text-gray-500 hover:text-gray-700">My Orders</Link>
-            <span className="mx-2">/</span>
-          </li>
-          <li className="flex items-center">
-            <span className="text-gray-700">Order Details</span>
-          </li>
-        </ol>
-      </nav>
-
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <h1 className="text-2xl font-bold mb-2 sm:mb-0">Order Details</h1>
-
-        {userName && (
-          <p className="text-sm text-gray-600">
-            Welcome!{" "}
-            <span className="text-gray-800 text-base font-medium">
-              {userName}
-            </span>
-          </p>
-        )}
-      </div>
+      {paramsOrderId && (
+        <>
+          <nav className="text-sm mb-4">
+            <ol className="list-none p-0 inline-flex">
+              <li className="flex items-center">
+                <Link to={"/"} className="text-gray-500 hover:text-gray-700">
+                  Home
+                </Link>
+                <span className="mx-2">/</span>
+              </li>
+              <li className="flex items-center">
+                <Link
+                  to={"/profile"}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  Account
+                </Link>
+                <span className="mx-2">/</span>
+              </li>
+              <li onClick={() => naviagate(-1)} className="flex items-center">
+                <Link className="text-gray-500 hover:text-gray-700">
+                  My Orders
+                </Link>
+                <span className="mx-2">/</span>
+              </li>
+              <li className="flex items-center">
+                <span className="text-gray-700">Order Details</span>
+              </li>
+            </ol>
+          </nav>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+            <h1 className="text-2xl font-bold mb-2 sm:mb-0">Order Details</h1>
+            {userName && (
+              <p className="text-sm text-gray-600">
+                Welcome!{" "}
+                <span className="text-gray-800 text-base font-medium">
+                  {userName}
+                </span>
+              </p>
+            )}
+          </div>
+        </>
+      )}
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden mb-8">
         <div className="p-4 sm:p-6">
@@ -186,6 +195,10 @@ const OrderDetails = () => {
                   disabled
                 >
                   Cancelled
+                </button>
+              ) : order.orders.order_status === "Delivered" ? (
+                <button className="w-full sm:w-auto bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                  return
                 </button>
               ) : (
                 <button

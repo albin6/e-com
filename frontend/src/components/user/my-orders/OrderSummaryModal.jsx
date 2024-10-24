@@ -68,6 +68,11 @@ const OrderSummaryModal = ({
       //   throw new Error('Failed to place order');
       // }
     } catch (error) {
+      if (error.status == 500) {
+        toast.error("Please choose a payment method", {
+          position: "top-center",
+        });
+      }
       console.error("Error placing order:", error);
       // Handle error (e.g., show error message to user)
     }

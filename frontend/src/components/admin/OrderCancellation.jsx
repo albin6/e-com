@@ -31,14 +31,18 @@ export default function OrderCancellation({ order, handleCancelOrder }) {
     <div>
       <button
         className={`px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ${
-          order.status === "Cancelled"
+          order.status === "Cancelled" || order.status === "Delivered"
             ? "bg-red-500 cursor-not-allowed opacity-50"
             : "bg-red-600 hover:bg-red-700"
         }`}
-        disabled={order.status === "Cancelled"}
+        disabled={order.status === "Cancelled" || order.status === "Delivered"}
         onClick={openDialog}
       >
-        {order.status === "Cancelled" ? "Cancelled" : "Cancel"}
+        {order.status === "Cancelled"
+          ? "Cancelled"
+          : order.status === "Delivered"
+          ? "Delivered"
+          : "Cancel Order"}
       </button>
 
       {isDialogOpen && (

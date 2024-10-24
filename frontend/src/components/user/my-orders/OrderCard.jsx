@@ -77,7 +77,7 @@ export default function OrderCard({ order }) {
                   Price: ₹{item.price.toFixed(2)}
                 </p>
                 {order &&
-                  order.orderStatus !== "Cancelled" &&
+                  order.orderStatus === "Delivered" &&
                   order.returnEligible && (
                     <p className="text-xs text-red-500">
                       {order.returnEligible}

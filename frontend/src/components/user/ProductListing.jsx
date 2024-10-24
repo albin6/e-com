@@ -12,6 +12,7 @@ import Error from "../Error";
 import ProductListingShimmer from "../ui/ProductListingShimmer";
 import { useNavigate } from "react-router-dom";
 import { searchContext } from "../../context/Search";
+import NoProductForTheSearch from "./NoProductForTheSearch";
 
 export default function ProductListing() {
   const { searchTerm } = useContext(searchContext);
@@ -100,6 +101,11 @@ export default function ProductListing() {
       console.log("Updated filters:", updatedFilters);
       return updatedFilters;
     });
+    setCurrentPage(1);
+  };
+
+  const handleFilterReset = () => {
+    setFilters({ brand: [], os: [], processorBrand: [], ram: [] });
     setCurrentPage(1);
   };
 
@@ -256,6 +262,12 @@ export default function ProductListing() {
                 )}
               </div>
             </div>
+            <button
+              onClick={handleFilterReset}
+              className="bg-gray-800 text-white px-3 py-1 rounded mt-2"
+            >
+              Reset Filters
+            </button>
           </div>
         </aside>
 
@@ -288,120 +300,128 @@ export default function ProductListing() {
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {filteredProducts.map((product) => (
-              <div
-                key={product._id}
-                className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col cursor-pointer transition-transform duration-300 hover:scale-105"
-                onClick={() => navigate(`/product/${product._id}`)}
-              >
-                <div className="relative w-full h-56 flex justify-center py-3 bg-gray-800">
-                  <img
-                    src={`${import.meta.env.VITE_API_BASE_URL}/products/${
-                      product.variants[0].images[0]
-                    }`}
-                    alt={product.name}
-                    className=" h-full object-cover"
-                  />
-                </div>
-                <div className="p-4 flex-grow flex flex-col justify-between">
-                  <div>
-                    <h3 className="font-semibold text-base sm:text-lg mb-2 line-clamp-2">
-                      {product.name}
-                    </h3>
-                    <div className="flex items-center mb-2">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                            i < product.rating
-                              ? "text-yellow-400 fill-yellow-400"
-                              : "text-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
+            {filteredProducts.length !== 0 ? (
+              filteredProducts.map((product) => (
+                <div
+                  key={product._id}
+                  className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col cursor-pointer transition-transform duration-300 hover:scale-105"
+                  onClick={() => navigate(`/product/${product._id}`)}
+                >
+                  <div className="relative w-full h-56 flex justify-center py-3 bg-gray-800">
+                    <img
+                      src={`${import.meta.env.VITE_API_BASE_URL}/products/${
+                        product.variants[0].images[0]
+                      }`}
+                      alt={product.name}
+                      className=" h-full object-cover"
+                    />
                   </div>
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-base sm:text-lg font-bold">
-                        ₹{product.price.toLocaleString()}
-                      </span>
-                      <div className="text-sm text-gray-600">
-                        <span className="line-through">
-                          MRP: ₹
-                          {(
-                            product.price /
-                            (1 - product.discount / 100)
-                          ).toFixed(2)}
-                        </span>
+                  <div className="p-4 flex-grow flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-semibold text-base sm:text-lg mb-2 line-clamp-2">
+                        {product.name}
+                      </h3>
+                      <div className="flex items-center mb-2">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                              i < product.rating
+                                ? "text-yellow-400 fill-yellow-400"
+                                : "text-gray-300"
+                            }`}
+                          />
+                        ))}
                       </div>
                     </div>
                     <div>
-                      <span className="text-green-600 text-sm">
-                        (Save ₹
-                        {(
-                          product.price / (1 - product.discount / 100) -
-                          product.price
-                        ).toFixed(2)}
-                        , {product.discount}% off)
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-base sm:text-lg font-bold">
+                          ₹{product.price.toLocaleString()}
+                        </span>
+                        <div className="text-sm text-gray-600">
+                          <span className="line-through">
+                            MRP: ₹
+                            {(
+                              product.price /
+                              (1 - product.discount / 100)
+                            ).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-green-600 text-sm">
+                          (Save ₹
+                          {(
+                            product.price / (1 - product.discount / 100) -
+                            product.price
+                          ).toFixed(2)}
+                          , {product.discount}% off)
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <NoProductForTheSearch searchQuery={searchTerm} />
+            )}
           </div>
 
           {/* Pagination */}
-          <div className="mt-8 flex justify-center">
-            <nav className="inline-flex rounded-md shadow">
-              <button
-                onClick={() => paginate(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="sr-only">Previous</span>
-                <ChevronLeft
-                  className="h-4 w-4 sm:h-5 sm:w-5"
-                  aria-hidden="true"
-                />
-              </button>
-              <div className="hidden sm:flex">
-                {[...Array(totalPages)].map((_, index) => (
+          {filteredProducts.length !== 0 && (
+            <>
+              <div className="mt-8 flex justify-center">
+                <nav className="inline-flex rounded-md shadow">
                   <button
-                    key={index}
-                    onClick={() => paginate(index + 1)}
-                    className={`px-4 py-2 border border-gray-300 text-sm font-medium ${
-                      currentPage === index + 1
-                        ? "bg-gray-50 border-gray-500 text-gray-600"
-                        : "bg-white text-gray-500 hover:bg-gray-50"
-                    }`}
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {index + 1}
+                    <span className="sr-only">Previous</span>
+                    <ChevronLeft
+                      className="h-4 w-4 sm:h-5 sm:w-5"
+                      aria-hidden="true"
+                    />
                   </button>
-                ))}
+                  <div className="hidden sm:flex">
+                    {[...Array(totalPages)].map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => paginate(index + 1)}
+                        className={`px-4 py-2 border border-gray-300 text-sm font-medium ${
+                          currentPage === index + 1
+                            ? "bg-gray-50 border-gray-500 text-gray-600"
+                            : "bg-white text-gray-500 hover:bg-gray-50"
+                        }`}
+                      >
+                        {index + 1}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="sm:hidden px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="sr-only">Next</span>
+                    <ChevronRight
+                      className="h-4 w-4 sm:h-5 sm:w-5"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </nav>
               </div>
-              <span className="sm:hidden px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                {currentPage} / {totalPages}
-              </span>
-              <button
-                onClick={() => paginate(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="sr-only">Next</span>
-                <ChevronRight
-                  className="h-4 w-4 sm:h-5 sm:w-5"
-                  aria-hidden="true"
-                />
-              </button>
-            </nav>
-          </div>
-          <div className="mt-4 text-center text-sm text-gray-600">
-            Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-            {Math.min(currentPage * itemsPerPage, totalProducts)} of{" "}
-            {totalProducts} products
-          </div>
+              <div className="mt-4 text-center text-sm text-gray-600">
+                Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                {Math.min(currentPage * itemsPerPage, totalProducts)} of{" "}
+                {totalProducts} products
+              </div>
+            </>
+          )}
         </main>
       </div>
     </div>

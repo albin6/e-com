@@ -18,10 +18,10 @@ export function useUserAuth() {
 
 // -----------------------------------------------------------
 // for category
-export const useCategoryList = () => {
+export const useCategoryList = (queryFunc, currentPage, itemsPerPage) => {
   return useQuery({
-    queryKey: ["categories"],
-    queryFn: fetchCategories,
+    queryKey: ["categories", currentPage, itemsPerPage],
+    queryFn: () => queryFunc(currentPage, itemsPerPage),
   });
 };
 
@@ -38,10 +38,10 @@ export const useCategoryListMutation = (mutationFunc) => {
 
 // -------------------------------------------------------------
 // for brand
-export const useBrandList = () => {
+export const useBrandList = (queryFunc, currentPage, itemsPerPage) => {
   return useQuery({
-    queryKey: ["brands"],
-    queryFn: getBrandList,
+    queryKey: ["brands", currentPage, itemsPerPage],
+    queryFn: () => queryFunc(currentPage, itemsPerPage),
   });
 };
 
@@ -58,10 +58,10 @@ export const useBrandListMutation = (mutationFunc) => {
 
 // -------------------------------------------------------------
 // for products
-export const useProductsData = () => {
+export const useProductsData = (queryFunc, currentPage, itemsPerPage) => {
   return useQuery({
-    queryKey: ["products"],
-    queryFn: fetchProductsData,
+    queryKey: ["products", currentPage, itemsPerPage],
+    queryFn: () => queryFunc(currentPage, itemsPerPage),
   });
 };
 
@@ -232,13 +232,13 @@ export const useOrderDetailsMutation = (mutationFunc) => {
 // --------------------------------------------------------------
 // --------------------------------------------------------------
 // for getting orders
-export const useAllOrders = (queryFunc) => {
+export const useAllOrders = (queryFunc, currentPage, itemsPerPage) => {
   return useQuery({
-    queryKey: ["allOrders"],
-    queryFn: queryFunc,
+    queryKey: ["allOrders", currentPage, itemsPerPage], // Include parameters in the queryKey
+    queryFn: () => queryFunc({ currentPage, itemsPerPage }), // Pass parameters to the query function
+    keepPreviousData: true, // Optional: Keeps previous data while fetching new
   });
 };
-
 export const useAllOrdersMutation = (mutationFunc) => {
   const queryClient = useQueryClient();
   return useMutation({

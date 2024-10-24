@@ -13,6 +13,7 @@ import { fetchProductsDetails } from "../../utils/products/userProductListing";
 import { Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import NoProductFoundUser from "./NoProductFound";
 
 export default function Wishlist() {
   const navigate = useNavigate();
@@ -77,7 +78,6 @@ export default function Wishlist() {
         <h2 className="text-xl font-semibold">
           Wishlist ({wishlistProducts && wishlistProducts.length})
         </h2>
-        <Button variant="outline">Move All To Bag</Button>
       </div>
 
       <div className="space-y-4 mb-8">
@@ -165,9 +165,7 @@ export default function Wishlist() {
             </Card>
           ))
         ) : (
-          <div className="h-3/5  flex justify-center items-center ">
-            <span className="font-medium text-xl">No prodcuts in cart!</span>
-          </div>
+          <NoProductFoundUser />
         )}
       </div>
 
@@ -185,7 +183,7 @@ export default function Wishlist() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {products &&
-          products.map((product) => (
+          products.slice(0, 4).map((product) => (
             <div
               key={product._id}
               className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col cursor-pointer transition-transform duration-300 hover:scale-105"
